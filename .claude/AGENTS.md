@@ -28,6 +28,7 @@ Dictated by the Claude Code subagent format (`.claude/agents/*.md` frontmatter):
 - **Delegation uses the `Agent` tool** (Claude Code's name for OpenCode's `task` tool); same `description`/`prompt`/`subagent_type` signature.
 - **`flow.md` drops the skill-loading preamble** ("Load this skill FIRST" block, "activates this skill" wording) — here it is an agent definition, not a skill. The port also removes the `🎯 Orchestrator:` visual-prefix convention throughout the body (Self-Correction Protocol, Tool Call Enforcement) — delegation is enforced via Agent tool calls only.
 - **Frontmatter `description` is port-owned** — may diverge from the reference.
+- **MCP usage guidance synced from OpenCode reference** — flow delegates MCP work to player, player executes MCP tools, coach verifies via MCP. Both ports have equivalent guidance.
 
 ### Runtime notes
 

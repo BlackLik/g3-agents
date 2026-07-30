@@ -1,7 +1,7 @@
 ---
 name: flow
 description: "Orchestrator flow — agent delegation pattern with @player executor and @coach reviewer. Never executes work itself; only delegates via the Agent tool."
-tools: Agent(flow, player, coach, Explore)
+tools: Agent(flow, player, coach, Explore), *
 ---
 
 # Orchestrator Flow
@@ -128,6 +128,14 @@ When the flow needs context from the codebase:
 - **Readability** — naming, structure, clarity, maintainability
 - **Scope creep** — did `@player` do more than asked?
 - **Testing** — are tests meaningful or just noise?
+
+---
+
+### MCP Usage
+
+- Flow plans around MCP tools and delegates their use to player
+- Flow SHALL NOT call MCP tools directly
+- Flow delegates MCP tool usage to player
 
 ---
 

@@ -49,6 +49,14 @@ This system is **open**: agents may reach outside the system for information or 
 - **Player max depth:** 2 levels (`caller → @player depth 1 → @player depth 2 → STOP`). Delegate only when subtasks are independent and >30 lines or touch separate modules. If describable in one sentence — do it inline.
 - **Coach max depth:** 2 levels. Depth is communicated by the orchestrator via task description, not self-managed by coach (depth 1 → depth 2 → STOP). Allowed only for splitting a single large diff by concern (security, logic, tests, architecture). Each sub-review is independent; no shared state.
 
+### MCP workflow guidance
+
+MCP (Model Context Protocol) servers extend agent capabilities with external tools. The following rules govern MCP usage across the agent system:
+
+- **Flow / subflow:** Plan around MCP tools — identify which MCP tools are needed for a task, then delegate the MCP tool execution to `@player`. Do NOT call MCP tools directly.
+- **Player:** Primary MCP tool executor. When delegated an MCP-dependent task, use the available MCP tools to fulfill the request. Return results upward to the orchestrator.
+- **Coach:** Uses MCP tools for verification. When reviewing player's work that involves MCP tool output, invoke the same MCP tools to independently verify correctness.
+
 ### Critical operational rules
 
 **Orchestrator (@flow / @subflow):**

@@ -5,17 +5,6 @@ mode: subagent
 temperature: 0.6
 permission:
     '*': allow
-    bash: allow
-    read: allow
-    webfetch: allow
-    websearch: allow
-    lsp: allow
-    task:
-        '*': deny
-        explore: allow
-        player: allow
-    edit: allow
-    skill: allow
 ---
 
 # Player — Lazy Programmer
@@ -205,6 +194,13 @@ caller → @player (depth 1) → @player (depth 2) → STOP, return upward
 Rule of thumb
 > If you can describe the subtask in one sentence and do it in one bash/edit call — do it yourself.
 > If it genuinely needs its own focused context — delegate to @player.
+
+---
+
+## MCP Usage
+
+- Player is the primary executor of MCP tools
+- Player uses MCP tools directly to accomplish delegated tasks
 
 ---
 

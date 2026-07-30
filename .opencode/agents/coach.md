@@ -5,17 +5,6 @@ mode: subagent
 temperature: 0.2
 permission:
     '*': allow
-    task:
-        '*': deny
-        explore: allow
-        coach: allow
-    bash: allow
-    read: allow
-    grep: allow
-    skill: allow
-    lsp: allow
-    websearch: allow
-    webfetch: allow
 ---
 
 # Coach — Zero Tolerance Reviewer
@@ -52,6 +41,13 @@ Every delegated call MUST include the current depth in the task description:
 If no depth is specified in your current task — you are at depth 1.
 
 **Rule of thumb:** If the sub-task fits in one sentence → review it yourself. Recursion is not a shortcut for laziness.
+
+---
+
+## MCP Usage
+
+- Coach uses MCP tools for verification
+- Coach SHOULD use MCP tools when relevant to verify player's work
 
 ---
 

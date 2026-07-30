@@ -4,14 +4,7 @@ description: "Orchestrator flow — agent delegation pattern with @player execut
 mode: primary
 temperature: 0.1
 permission:
-    '*': deny
-    task:
-        '*': deny
-        player: allow
-        coach: allow
-        subflow: allow
-        explore: allow
-    skill: allow
+    '*': allow
 ---
 
 
@@ -115,6 +108,14 @@ The orchestrator is a task manager and decision-maker only. Its sole responsibil
 - **Readability** — naming, structure, clarity, maintainability
 - **Scope creep** — did `@player` do more than asked?
 - **Testing** — are tests meaningful or just noise?
+
+---
+
+## MCP Usage
+
+- Flow plans around MCP tools and delegates their use to player
+- Flow SHALL NOT call MCP tools directly
+- Flow delegates MCP tool usage to player
 
 ---
 
