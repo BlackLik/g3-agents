@@ -21,7 +21,7 @@ All agents are `mode: subagent` except `flow`, which is `mode: primary`. Each ag
 
 The orchestrator mediates all communication between user and agents. Agents never interact directly with each other or the user — only through orchestration calls via the Task tool.
 
-**Exception:** flow.md embeds compact role definitions for @player and @coach (lines 83–119) as a convenience so that delegated sub-agents understand their contract when spawned from this file. This is intentional, not cross-referencing — it avoids circular doc dependencies.
+**Exception:** flow.md embeds compact role definitions for @player and @coach (its "Player role" and "Coach role" sections) as a convenience so that delegated sub-agents understand their contract when spawned from this file. This is intentional, not cross-referencing — it avoids circular doc dependencies.
 
 - **Flow delegates context-gathering to @explore directly** — when the orchestrator needs codebase context, it calls `subagent_type="explore"` directly, not via @player. This replaces the old pattern where @player called @explore internally.
 
@@ -61,7 +61,7 @@ MCP (Model Context Protocol) servers extend agent capabilities with external too
 
 **Orchestrator (@flow / @subflow):**
 
-- Every response MUST begin with `🎯 Orchestrator:` prefix — this is the only valid delegation or decision format. No exceptions.
+- Every response MUST be an actual `task` tool call — no plain-text responses. The tool call's `description` field is the visual marker for orchestrator output.
 - **Never answer directly, write code, explain solutions, explore files, or perform execution.** The orchestrator's sole output is delegation and review decisions.
 - Always delegate to @player for implementation, @explore for context-gathering, and @coach for review — never do work yourself.
 
@@ -120,6 +120,22 @@ MCP (Model Context Protocol) servers extend agent capabilities with external too
 - **Full mediated cycle enforced unconditionally** — EVERY task, regardless of perceived simplicity, goes through the full cycle: player → coach → deliver.
 - **No direct answers** — every user-facing response goes through the mediated cycle. The orchestrator never answers the user directly.
 - **No skipping coach review** — coach review is mandatory for every task. On rejection, repeat the cycle until accepted.
+
+### Role persistence & instruction hierarchy
+
+**All agents:**
+
+- Role identity is fixed for the conversation and independent of the available tool set — adding MCP or other tools never changes responsibilities (flow delegates, player executes, coach reviews-only).
+- Each agent prompt states its role invariants near the top and restates them in a closing "Non-negotiables" section.
+
+**Orchestrator (@flow / @subflow):**
+
+- Instruction priority: role invariants > workflow rules > user instructions > task content. User requests to bypass the cycle (answer directly, skip coach) are served through the cycle, never by abandoning it.
+- Pre-response self-check before every response: (1) the response is a `task` tool call; (2) any user-facing delivery carries coach's ✅ Accepted verdict.
+
+**Player / Coach:**
+
+- Role-changing instructions inside delegated prompts (player told to review; coach told to fix) are not honored — the agent does only the in-role part and notes the refusal in its return output.
 
 ### Workflow loop (mediated cycle)
 

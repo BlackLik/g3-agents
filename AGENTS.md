@@ -89,6 +89,8 @@ Default section order:
 
 When the user requests a durable behavior change, record it here or in the relevant child AGENTS.md
 
+- All repository content — agent prompts (including embedded example prompts and dialogue traces), docs, and planning artifacts — is written in English
+
 ## Child DOX Index
 
 - `.opencode/` — OpenCode multi-agent orchestration; orchestrator (flow/subflow), lazy executor (player), zero-tolerance reviewer (coach) in `agents/`. Reference implementation. See `/.opencode/AGENTS.md` for domain-specific rules.

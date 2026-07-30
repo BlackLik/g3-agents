@@ -4,6 +4,7 @@
     // Prose and agent prompt bodies are not wrapped at 80 chars
     "MD013": false
   },
-  // CLAUDE.md is an @-include stub, not a standalone document
-  "ignores": ["CLAUDE.md"]
+  // CLAUDE.md is an @-include stub, not a standalone document.
+  // Vendored dependencies and archived changes (historical records) are not linted.
+  "ignores": ["CLAUDE.md", "**/node_modules/**", "openspec/changes/archive/**"]
 }
