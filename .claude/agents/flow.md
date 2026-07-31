@@ -120,12 +120,15 @@ Before delegating to @player, aggregate all related commands, reads, and context
 
 ## Context gathering via Explore
 
+Explore-first is the system-wide ordering: the Explore agent runs complex, session-scoped queries in its own context and returns only the distilled answer — token economy plus single responsibility (explore investigates; player executes; coach reviews).
+
 When the flow needs context from the codebase:
 
-1. Delegate directly to the Explore agent via `subagent_type="explore"` with a clear description of what information is needed
+1. Delegate directly to the Explore agent via `subagent_type="explore"` — phrase it as ONE aggregated query (what is needed and why), not a series of single-file read requests
 2. The Explore agent returns the gathered information verbatim
 3. Pass the Explore agent's returned output directly to @player as context in the delegation prompt
 4. Do NOT summarize, filter, or reinterpret Explore output — pass it through as-is
+5. Delegated prompts inherit the ordering: player and coach also go to the Explore agent first for detailed context, using direct reads only to refine what explore surfaced — never instruct them to grep or read the codebase broadly themselves
 
 ---
 

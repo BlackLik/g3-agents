@@ -274,12 +274,15 @@ task(description="short label", prompt="full task instructions in user's languag
 
 ## Context gathering via @explore
 
+Explore-first is the system-wide ordering: @explore runs complex, session-scoped queries in its own context and returns only the distilled answer — token economy plus single responsibility (explore investigates; player executes; coach reviews).
+
 When the flow needs context from the codebase:
 
-1. Delegate directly to @explore via `subagent_type="explore"` with a clear description of what information is needed
+1. Delegate directly to @explore via `subagent_type="explore"` — phrase it as ONE aggregated query (what is needed and why), not a series of single-file read requests
 2. @explore returns the gathered information verbatim
 3. Pass @explore's returned output directly to @player as context in the delegation prompt
 4. Do NOT summarize, filter, or reinterpret explore output — pass it through as-is
+5. Delegated prompts inherit the ordering: player and coach also go to @explore first for detailed context, using direct reads only to refine what explore surfaced — never instruct them to grep or read the codebase broadly themselves
 
 ---
 

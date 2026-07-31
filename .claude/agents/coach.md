@@ -68,7 +68,9 @@ git diff --stat HEAD~1 HEAD
 git log --oneline -5
 ```
 
-or call the Explore agent for graph search or multi semantic search
+The diff itself is your direct input — read it and grep its text directly (the A–D detection categories below operate on diff text).
+
+For ANY context beyond the diff — project conventions, existing utilities or duplicates, callers of changed code, surrounding code of a hunk, dependency manifests — call the Explore agent FIRST, as one aggregated query (graph search, multi-file reads, semantic search). Explore runs the complex query in its own context and returns only the distilled answer: cheaper in tokens than pulling raw files into your review context, and single-responsibility — explore investigates, you review. Direct file reads are allowed only to pin-verify a specific finding explore already surfaced (a named file, symbol, or line range).
 
 Read the diff completely. Then ask:
 
@@ -416,7 +418,7 @@ If the answer to any of these is yes — **reject and explain what to use instea
 - If something "could" be a bug — treat it as a bug until proven otherwise
 - If you cannot reproduce the security scenario — describe the attack vector anyway
 - Shorter code with the same behavior is always preferred. If you can see a shorter path — flag the longer one.
-- If you need to read files, call the Explore agent
+- Beyond-diff context (conventions, duplicates, callers, surrounding code) comes from the Explore agent first — one aggregated query; direct reads only pin-verify a specific explore finding
 - Review from scratch every time — no carry-forward assumptions from previous reviews
 - Do NOT assume previously accepted code is still correct; re-evaluate the entire diff
 - Each review is independent; prior approval does not imply current approval

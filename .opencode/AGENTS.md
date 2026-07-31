@@ -64,16 +64,19 @@ MCP (Model Context Protocol) servers extend agent capabilities with external too
 - Every response MUST be an actual `task` tool call — no plain-text responses. The tool call's `description` field is the visual marker for orchestrator output.
 - **Never answer directly, write code, explain solutions, explore files, or perform execution.** The orchestrator's sole output is delegation and review decisions.
 - Always delegate to @player for implementation, @explore for context-gathering, and @coach for review — never do work yourself.
+- Explore delegations are phrased as ONE aggregated, session-scoped query; delegated prompts propagate the explore-first ordering to player and coach (never instruct them to grep or read the codebase broadly themselves).
 
 **Player (@player):**
 
 - `webfetch: allow` — permitted for external lookups when needed.
 - **Broken linters/tests:** if your change causes lint errors or test failures in unrelated code, stop and return upward immediately (`⚠️ lint failed in utils.py — returning upward`). Do NOT fix them. Do NOT refactor to make them pass. Do NOT touch files outside the task scope.
 - Write less code; don't explain; zero scope creep; check before writing with `@explore`.
+- **Explore-first context:** any detailed or broad context need (multi-file reads, codebase structure, pattern/semantic search, reuse checks) goes to `@explore` FIRST as one aggregated query; direct read/grep only refine a concrete target explore or the task prompt already named. Rationale: explore runs complex queries in its own context and returns the distilled answer — token economy + single responsibility.
 
 **Coach (@coach):**
 
 - Reviews git diffs, detects AI-generated code fingerprints, checks all vulnerability categories (injection, auth bypass, SSRF, path traversal, crypto, deserialization), enforces necessity justification for any new code.
+- **Beyond-diff context via @explore:** the diff is coach's direct input (grep-based detection categories run on diff text); any context beyond the diff — project conventions, duplicates, callers, surrounding code — comes from `@explore` first as one aggregated query; direct reads only pin-verify a specific explore finding.
 - **Depth tracking mandatory:** Every delegated call MUST include current depth in task description using `(depth: N)` format. Max depth: 2 (depth 1 → depth 2 → STOP). Rule of thumb: if sub-task fits in one sentence, review inline — no recursion.
 
 ### Scope aggregation
