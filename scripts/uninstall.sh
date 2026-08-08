@@ -2,7 +2,9 @@
 set -euo pipefail
 
 OPENCODE_FILES="flow.md subflow.md player.md coach.md"
+OPENCODE_REF_FILES="coach-reference.md flow-reference.md"
 CLAUDE_FILES="flow.md player.md coach.md"
+CLAUDE_REF_FILES="coach-reference.md flow-reference.md"
 
 usage() {
   echo "Usage: $0 <opencode|claude|all> [--global|--local]" >&2
@@ -24,11 +26,13 @@ uninstall_one() {
 }
 
 if [ "$tool" = "opencode" ] || [ "$tool" = "all" ]; then
-  [ "$target" = "--global" ] && dest="$HOME/.config/opencode/agents" || dest="./.opencode/agents"
-  uninstall_one "$dest" "$OPENCODE_FILES"
+  [ "$target" = "--global" ] && base="$HOME/.config/opencode" || base="./.opencode"
+  uninstall_one "$base/agents" "$OPENCODE_FILES"
+  uninstall_one "$base/reference" "$OPENCODE_REF_FILES"
 fi
 
 if [ "$tool" = "claude" ] || [ "$tool" = "all" ]; then
-  [ "$target" = "--global" ] && dest="$HOME/.claude/agents" || dest="./.claude/agents"
-  uninstall_one "$dest" "$CLAUDE_FILES"
+  [ "$target" = "--global" ] && base="$HOME/.claude" || base="./.claude"
+  uninstall_one "$base/agents" "$CLAUDE_FILES"
+  uninstall_one "$base/reference" "$CLAUDE_REF_FILES"
 fi

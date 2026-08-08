@@ -1,8 +1,11 @@
 {
   "globs": ["**/*.md"],
   "config": {
-    // Prose and agent prompt bodies are not wrapped at 80 chars
-    "MD013": false
+    "MD013": {
+        "line_length": 120,
+        "code_blocks": false,
+        "tables": false
+    }
   },
   // CLAUDE.md is an @-include stub, not a standalone document.
   // Vendored dependencies and archived changes (historical records) are not linted.

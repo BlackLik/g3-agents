@@ -2,13 +2,15 @@
 
 ## Purpose
 
-Rules for when and how every agent (flow, player, coach) delegates context-gathering to @explore instead of using direct tools or @player.
+Rules for when and how every agent (flow, player, coach) delegates context-gathering to @explore instead of using direct
+tools or @player.
 
 ## Requirements
 
 ### Requirement: Flow delegates context-gathering to explore agent
 
-When the orchestrator flow needs project context (file contents, codebase structure, search results, git history), it SHALL delegate directly to the explore agent via `subagent_type="explore"` — never to `@player`.
+When the orchestrator flow needs project context (file contents, codebase structure, search results, git history), it
+SHALL delegate directly to the explore agent via `subagent_type="explore"` — never to `@player`.
 
 #### Scenario: Flow needs file contents
 
@@ -27,16 +29,20 @@ When the orchestrator flow needs project context (file contents, codebase struct
 
 ### Requirement: Player does not handle context-gathering
 
-`@player` SHALL NOT receive tasks whose primary purpose is reading, searching, or investigating the codebase. Player's sole responsibility is writing/modifying code per task instructions.
+`@player` SHALL NOT receive tasks whose primary purpose is reading, searching, or investigating the codebase. Player's
+sole responsibility is writing/modifying code per task instructions.
 
 #### Scenario: Context task misdirected to player
 
 - **WHEN** flow accidentally delegates a context-gathering task to `@player`
-- **THEN** `@player` SHALL reject the task and return upward with a message indicating the task should be routed to explore
+- **THEN** `@player` SHALL reject the task and return upward with a message indicating the task should be routed to
+  explore
 
 ### Requirement: Explore result format
 
-The explore agent SHALL return results as markdown with the file path as an H3 header followed by a code block containing the contents. Flow SHALL pass explore's returned output verbatim to @player as context, prefixed with the file path.
+The explore agent SHALL return results as markdown with the file path as an H3 header followed by a code block
+containing the contents. Flow SHALL pass explore's returned output verbatim to @player as context, prefixed with the
+file path.
 
 #### Scenario: Explore returns file contents
 
@@ -46,7 +52,8 @@ The explore agent SHALL return results as markdown with the file path as an H3 h
 #### Scenario: Explore returns search results
 
 - **WHEN** explore searches the codebase
-- **THEN** it SHALL return matching lines with file paths and line numbers in format: `### path/to/file\n- Line N: <matched line>`
+- **THEN** it SHALL return matching lines with file paths and line numbers in format: `### path/to/file\n- Line N:
+  <matched line>`
 
 #### Scenario: Flow passes explore output to player
 
@@ -55,26 +62,37 @@ The explore agent SHALL return results as markdown with the file path as an H3 h
 
 ### Requirement: Explore-first ordering for detailed context
 
-Every agent (flow, player, coach) SHALL delegate to `@explore` FIRST whenever it needs detailed or broad project context — multi-file contents, codebase structure, pattern or semantic search, callers/usages of a symbol, project conventions, or "how does X work" questions. The explore query SHALL be phrased as one complex, session-scoped request (what is needed and why), not as a series of single-file read requests. Direct read/grep/glob tools SHALL NOT be the first step of context gathering.
+Every agent (flow, player, coach) SHALL delegate to `@explore` FIRST whenever it needs detailed or broad project context
+— multi-file contents, codebase structure, pattern or semantic search, callers/usages of a symbol, project conventions,
+or "how does X work" questions. The explore query SHALL be phrased as one complex, session-scoped request (what is
+needed and why), not as a series of single-file read requests. Direct read/grep/glob tools SHALL NOT be the first step
+of context gathering.
 
 #### Scenario: Player needs to understand a module before implementing
 
-- **WHEN** player receives a task that requires understanding code it has not seen (e.g., "add a timeout param to `fetch_data`" and player does not know `fetch_data`'s signature or callers)
-- **THEN** player SHALL delegate one aggregated query to `@explore` (e.g., "show `fetch_data` definition, its callers, and existing timeout patterns in this repo")
+- **WHEN** player receives a task that requires understanding code it has not seen (e.g., "add a timeout param to
+  `fetch_data`" and player does not know `fetch_data`'s signature or callers)
+- **THEN** player SHALL delegate one aggregated query to `@explore` (e.g., "show `fetch_data` definition, its callers,
+  and existing timeout patterns in this repo")
 - **THEN** player SHALL NOT open the files itself as the first step
 
 #### Scenario: Agent starts with a direct grep sweep
 
-- **WHEN** an agent begins context gathering with direct `grep`/`glob`/`read` calls across the codebase before any `@explore` delegation
+- **WHEN** an agent begins context gathering with direct `grep`/`glob`/`read` calls across the codebase before any
+  `@explore` delegation
 - **THEN** this SHALL be treated as a workflow violation of the explore-first rule
 
 ### Requirement: Direct tools permitted only for narrow refinement
 
-After an `@explore` pass, an agent MAY use direct read/grep tools only to refine a specific item that explore already surfaced — e.g., re-reading one named file range, confirming one exact symbol or line. A direct-tool call SHALL be scoped to a concrete target (specific file path, symbol, or line range) obtained from explore output or from the task prompt itself.
+After an `@explore` pass, an agent MAY use direct read/grep tools only to refine a specific item that explore already
+surfaced — e.g., re-reading one named file range, confirming one exact symbol or line. A direct-tool call SHALL be
+scoped to a concrete target (specific file path, symbol, or line range) obtained from explore output or from the task
+prompt itself.
 
 #### Scenario: Pinpoint follow-up after explore
 
-- **WHEN** explore output names `api.py` lines 40–60 as the relevant region and the agent needs to confirm one detail there
+- **WHEN** explore output names `api.py` lines 40–60 as the relevant region and the agent needs to confirm one detail
+  there
 - **THEN** the agent MAY read that specific range directly without a second explore delegation
 
 #### Scenario: Refinement drifts into re-exploration
@@ -84,7 +102,8 @@ After an `@explore` pass, an agent MAY use direct read/grep tools only to refine
 
 ### Requirement: Player reuse checks route through explore
 
-Player's pre-write existence/reuse check (verifying whether a function, utility, or dependency already exists before writing new code) SHALL be delegated to `@explore` as a single query, not performed via direct `grep` sweeps.
+Player's pre-write existence/reuse check (verifying whether a function, utility, or dependency already exists before
+writing new code) SHALL be delegated to `@explore` as a single query, not performed via direct `grep` sweeps.
 
 #### Scenario: Player checks for an existing helper
 
@@ -94,7 +113,10 @@ Player's pre-write existence/reuse check (verifying whether a function, utility,
 
 ### Requirement: Coach gathers beyond-diff context via explore
 
-Coach reviews the delivered diff directly — the diff is its input. Any context beyond the diff (project conventions, existing utilities or duplicates, callers of changed code, surrounding code of a hunk, dependency manifests) SHALL be requested from `@explore` first. Coach MAY use direct reads only to pin-verify a specific finding explore already surfaced.
+Coach reviews the delivered diff directly — the diff is its input. Any context beyond the diff (project conventions,
+existing utilities or duplicates, callers of changed code, surrounding code of a hunk, dependency manifests) SHALL be
+requested from `@explore` first. Coach MAY use direct reads only to pin-verify a specific finding explore already
+surfaced.
 
 #### Scenario: Coach checks for duplicate utility
 

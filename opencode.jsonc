@@ -1,0 +1,9 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "references": {
+    "agent-reference": {
+      "path": ".opencode/reference",
+      "description": "Reference tiers for coach and flow/subflow agents — read the named file when a core-tier load trigger fires (AI-trace detection, vulnerability/anti-pattern catalogs, delegation-prompt role definitions, worked examples)"
+    }
+  }
+}

@@ -21,17 +21,25 @@ uninstall.sh|uninstall.ps1 <opencode|claude|all> [--global|--local]
 
 Default target is `--global`.
 
-Path mapping:
+Path mapping (agents + reference tier under the same base):
 
-| Tool | global | local |
+| Tool | global base | local base |
 | --- | --- | --- |
-| opencode | `~/.config/opencode/agents/` | `./.opencode/agents/` |
-| claude | `~/.claude/agents/` | `./.claude/agents/` |
+| opencode | `~/.config/opencode/` | `./.opencode/` |
+| claude | `~/.claude/` | `./.claude/` |
+
+Each port installs to `<base>/agents/` and `<base>/reference/`.
 
 Explicit file lists (the only files scripts may touch):
 
-- opencode: `flow.md`, `subflow.md`, `player.md`, `coach.md`
-- claude: `flow.md`, `player.md`, `coach.md`
+- opencode agents: `flow.md`, `subflow.md`, `player.md`, `coach.md`
+- opencode reference: `coach-reference.md`, `flow-reference.md`
+- claude agents: `flow.md`, `player.md`, `coach.md`
+- claude reference: `coach-reference.md`, `flow-reference.md`
+
+The reference tier is installed alongside the agents so globally installed prompts can resolve their load-trigger
+fallback paths (`~/.config/opencode/reference/`, `~/.claude/reference/`); repo-local runs use the relative paths (see
+`.opencode/AGENTS.md` → Prompt structure rules).
 
 Guarantees:
 

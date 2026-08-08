@@ -8,7 +8,8 @@ Rules prohibiting conditional approval patterns in @coach and enforcing fresh re
 
 ### Requirement: Coach issues binary verdict only
 
-`@coach` SHALL issue a binary verdict — either ✅ Accepted or ❌ Rejected — with specific findings. Coach SHALL NOT use conditional approval patterns such as "if you fix X, Y, Z you'll get approval" or "approved pending fixes".
+`@coach` SHALL issue a binary verdict — either ✅ Accepted or ❌ Rejected — with specific findings. Coach SHALL NOT use
+conditional approval patterns such as "if you fix X, Y, Z you'll get approval" or "approved pending fixes".
 
 #### Scenario: Conditional approval attempted
 
@@ -23,7 +24,9 @@ Rules prohibiting conditional approval patterns in @coach and enforcing fresh re
 
 ### Requirement: Coach reviews from scratch each time
 
-Each coach invocation SHALL re-read the full submission (not just the diff from the previous version) and perform a complete independent review. Coach SHALL NOT carry forward previous approvals or assume any code is correct based on prior reviews.
+Each coach invocation SHALL re-read the full submission (not just the diff from the previous version) and perform a
+complete independent review. Coach SHALL NOT carry forward previous approvals or assume any code is correct based on
+prior reviews.
 
 #### Scenario: Second review of same code after revision
 
@@ -37,7 +40,8 @@ Each coach invocation SHALL re-read the full submission (not just the diff from 
 
 ### Requirement: Coach does not prescribe fixes
 
-Coach SHALL identify what is wrong and why, but SHALL NOT prescribe specific code fixes. Prescribing fixes is `@player`'s responsibility.
+Coach SHALL identify what is wrong and why, but SHALL NOT prescribe specific code fixes. Prescribing fixes is
+`@player`'s responsibility.
 
 #### Scenario: Coach finds a bug
 

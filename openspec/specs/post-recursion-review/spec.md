@@ -8,7 +8,8 @@ Rules requiring @coach review after each recursion level completes.
 
 ### Requirement: Coach review after each recursion level
 
-After all subtasks at a given recursion level complete and their results are merged, flow SHALL invoke `@coach` to review the merged result before proceeding to the next level or returning to the caller.
+After all subtasks at a given recursion level complete and their results are merged, flow SHALL invoke `@coach` to
+review the merged result before proceeding to the next level or returning to the caller.
 
 #### Scenario: Single recursion level with 3 subtasks
 
@@ -24,7 +25,8 @@ After all subtasks at a given recursion level complete and their results are mer
 
 ### Requirement: Coach review scope per level
 
-Each recursion level's coach review SHALL be scoped to the subtasks at that level only. The review SHALL NOT re-review work from parent levels.
+Each recursion level's coach review SHALL be scoped to the subtasks at that level only. The review SHALL NOT re-review
+work from parent levels.
 
 #### Scenario: Level-scoped review
 
@@ -34,12 +36,14 @@ Each recursion level's coach review SHALL be scoped to the subtasks at that leve
 #### Scenario: Level communicated in coach prompt
 
 - **WHEN** flow calls coach for a recursion-level review
-- **THEN** flow SHALL include the depth level in the coach prompt: "Review the following depth-N subtask outputs: [list of outputs]"
+- **THEN** flow SHALL include the depth level in the coach prompt: "Review the following depth-N subtask outputs: [list
+  of outputs]"
 - **THEN** coach SHALL review only the listed outputs
 
 ### Requirement: Review gate blocks progression
 
-If coach rejects the merged result at any recursion level, flow SHALL NOT proceed to the next level or return to the caller. Flow SHALL create revision tasks and repeat until coach accepts.
+If coach rejects the merged result at any recursion level, flow SHALL NOT proceed to the next level or return to the
+caller. Flow SHALL create revision tasks and repeat until coach accepts.
 
 #### Scenario: Rejected merge at depth 1
 

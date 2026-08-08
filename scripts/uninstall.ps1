@@ -3,7 +3,9 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $OpencodeFiles = 'flow.md', 'subflow.md', 'player.md', 'coach.md'
+$OpencodeRefFiles = 'coach-reference.md', 'flow-reference.md'
 $ClaudeFiles = 'flow.md', 'player.md', 'coach.md'
+$ClaudeRefFiles = 'coach-reference.md', 'flow-reference.md'
 
 function Usage {
     [Console]::Error.WriteLine("Usage: scripts/uninstall.ps1 <opencode|claude|all> [--global|--local]")
@@ -25,11 +27,13 @@ function Uninstall-One($dest, $files) {
 }
 
 if ($tool -in 'opencode', 'all') {
-    $dest = if ($target -eq '--global') { Join-Path $HOME '.config/opencode/agents' } else { './.opencode/agents' }
-    Uninstall-One $dest $OpencodeFiles
+    $base = if ($target -eq '--global') { Join-Path $HOME '.config/opencode' } else { './.opencode' }
+    Uninstall-One (Join-Path $base 'agents') $OpencodeFiles
+    Uninstall-One (Join-Path $base 'reference') $OpencodeRefFiles
 }
 
 if ($tool -in 'claude', 'all') {
-    $dest = if ($target -eq '--global') { Join-Path $HOME '.claude/agents' } else { './.claude/agents' }
-    Uninstall-One $dest $ClaudeFiles
+    $base = if ($target -eq '--global') { Join-Path $HOME '.claude' } else { './.claude' }
+    Uninstall-One (Join-Path $base 'agents') $ClaudeFiles
+    Uninstall-One (Join-Path $base 'reference') $ClaudeRefFiles
 }

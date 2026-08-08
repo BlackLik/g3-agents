@@ -5,7 +5,9 @@ $ErrorActionPreference = 'Stop'
 $RepoRoot = Split-Path -Parent $PSScriptRoot
 
 $OpencodeFiles = 'flow.md', 'subflow.md', 'player.md', 'coach.md'
+$OpencodeRefFiles = 'coach-reference.md', 'flow-reference.md'
 $ClaudeFiles = 'flow.md', 'player.md', 'coach.md'
+$ClaudeRefFiles = 'coach-reference.md', 'flow-reference.md'
 
 function Usage {
     [Console]::Error.WriteLine("Usage: scripts/install.ps1 <opencode|claude|all> [--global|--local]")
@@ -31,11 +33,13 @@ function Install-One($src, $dest, $files) {
 }
 
 if ($tool -in 'opencode', 'all') {
-    $dest = if ($target -eq '--global') { Join-Path $HOME '.config/opencode/agents' } else { './.opencode/agents' }
-    Install-One (Join-Path $RepoRoot '.opencode/agents') $dest $OpencodeFiles
+    $base = if ($target -eq '--global') { Join-Path $HOME '.config/opencode' } else { './.opencode' }
+    Install-One (Join-Path $RepoRoot '.opencode/agents') (Join-Path $base 'agents') $OpencodeFiles
+    Install-One (Join-Path $RepoRoot '.opencode/reference') (Join-Path $base 'reference') $OpencodeRefFiles
 }
 
 if ($tool -in 'claude', 'all') {
-    $dest = if ($target -eq '--global') { Join-Path $HOME '.claude/agents' } else { './.claude/agents' }
-    Install-One (Join-Path $RepoRoot '.claude/agents') $dest $ClaudeFiles
+    $base = if ($target -eq '--global') { Join-Path $HOME '.claude' } else { './.claude' }
+    Install-One (Join-Path $RepoRoot '.claude/agents') (Join-Path $base 'agents') $ClaudeFiles
+    Install-One (Join-Path $RepoRoot '.claude/reference') (Join-Path $base 'reference') $ClaudeRefFiles
 }

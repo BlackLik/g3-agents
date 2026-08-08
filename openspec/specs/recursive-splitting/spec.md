@@ -8,7 +8,8 @@ Rules for how recursive calls must split requests into smaller independent subta
 
 ### Requirement: Recursive calls split requests into subtasks
 
-When flow delegates to `@subflow` (OpenCode) or self-recurses (Claude), it SHALL decompose the request into N independent subtasks and delegate each separately. The prompt SHALL NOT contain the full unsplit request.
+When flow delegates to `@subflow` (OpenCode) or self-recurses (Claude), it SHALL decompose the request into N
+independent subtasks and delegate each separately. The prompt SHALL NOT contain the full unsplit request.
 
 #### Scenario: Complex task with 3 independent parts
 
@@ -22,7 +23,8 @@ When flow delegates to `@subflow` (OpenCode) or self-recurses (Claude), it SHALL
 
 ### Requirement: Subtask boundary clarity
 
-Each subtask delegation SHALL have a clearly defined scope, success criteria, and output format. Subtasks SHALL NOT overlap in responsibilities.
+Each subtask delegation SHALL have a clearly defined scope, success criteria, and output format. Subtasks SHALL NOT
+overlap in responsibilities.
 
 #### Scenario: Non-overlapping subtask definitions
 

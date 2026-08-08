@@ -2,13 +2,16 @@
 
 ## Purpose
 
-Rules for detecting AI-generated code in diffs reviewed by @coach, covering signature markers, naming patterns, structure patterns, logic patterns, and context awareness.
+Rules for detecting AI-generated code in diffs reviewed by @coach, covering signature markers, naming patterns,
+structure patterns, logic patterns, and context awareness.
 
 ## Requirements
 
 ### Requirement: Detect AI signature markers
 
-The system SHALL detect explicit text markers in code diffs that indicate AI generation, including instruction comments (e.g., `# Step 1:`), placeholder comments (e.g., `// Your code here`), narrative comments (e.g., `/* First, we check if... */`), universal docstrings on trivial functions, and explicit AI references (e.g., "As an AI language model").
+The system SHALL detect explicit text markers in code diffs that indicate AI generation, including instruction comments
+(e.g., `# Step 1:`), placeholder comments (e.g., `// Your code here`), narrative comments (e.g., `/* First, we check
+if... */`), universal docstrings on trivial functions, and explicit AI references (e.g., "As an AI language model").
 
 #### Scenario: Detects instruction step comments
 
@@ -52,7 +55,8 @@ The system SHALL detect explicit text markers in code diffs that indicate AI gen
 
 ### Requirement: Compute per-category verdicts
 
-The system SHALL compute a per-category verdict (CLEAN / SUSPECTED / CONFIRMED) for each of the 5 categories based on the markers detected within that category.
+The system SHALL compute a per-category verdict (CLEAN / SUSPECTED / CONFIRMED) for each of the 5 categories based on
+the markers detected within that category.
 
 #### Scenario: Category CLEAN verdict
 
@@ -71,7 +75,9 @@ The system SHALL compute a per-category verdict (CLEAN / SUSPECTED / CONFIRMED) 
 
 ### Requirement: Detect AI naming patterns
 
-The system SHALL analyze identifier names in the diff for AI-typical naming patterns including overly long names (average >25 characters), zero abbreviations, academic verbs (perform, execute, process, handle, validate), and uniform naming patterns.
+The system SHALL analyze identifier names in the diff for AI-typical naming patterns including overly long names
+(average >25 characters), zero abbreviations, academic verbs (perform, execute, process, handle, validate), and uniform
+naming patterns.
 
 #### Scenario: Detects overly long identifiers with no abbreviations
 
@@ -100,7 +106,8 @@ The system SHALL analyze identifier names in the diff for AI-typical naming patt
 
 ### Requirement: Detect AI structure patterns
 
-The system SHALL analyze code architecture for AI-typical structural patterns including CRUD symmetry, universal error handling, unnecessary abstractions, and universal documentation.
+The system SHALL analyze code architecture for AI-typical structural patterns including CRUD symmetry, universal error
+handling, unnecessary abstractions, and universal documentation.
 
 #### Scenario: Detects CRUD symmetry
 
@@ -129,7 +136,8 @@ The system SHALL analyze code architecture for AI-typical structural patterns in
 
 ### Requirement: Detect AI logic patterns
 
-The system SHALL analyze code logic for AI-typical patterns including reimplementing built-in functions, custom library code, and no project idioms.
+The system SHALL analyze code logic for AI-typical patterns including reimplementing built-in functions, custom library
+code, and no project idioms.
 
 #### Scenario: Detects reimplemented built-ins
 
@@ -153,7 +161,9 @@ The system SHALL analyze code logic for AI-typical patterns including reimplemen
 
 ### Requirement: Detect AI context patterns
 
-The system SHALL analyze project awareness by checking whether the diff creates new utilities when one exists, creates new files instead of editing existing ones, duplicates existing dependencies, or uses wrong import styles. Context checks SHALL require delegation to @explore.
+The system SHALL analyze project awareness by checking whether the diff creates new utilities when one exists, creates
+new files instead of editing existing ones, duplicates existing dependencies, or uses wrong import styles. Context
+checks SHALL require delegation to @explore.
 
 #### Scenario: Detects duplicate utility creation
 
@@ -187,7 +197,8 @@ The system SHALL analyze project awareness by checking whether the diff creates 
 
 ### Requirement: Apply decision matrix for overall verdict
 
-The system SHALL combine per-category verdicts using the decision matrix: CLEAN (≤1 SUSPECTED, 0 CONFIRMED), SUSPECTED (2-3 SUSPECTED or 1 CONFIRMED), CONFIRMED (≥4 SUSPECTED or ≥2 CONFIRMED).
+The system SHALL combine per-category verdicts using the decision matrix: CLEAN (≤1 SUSPECTED, 0 CONFIRMED), SUSPECTED
+(2-3 SUSPECTED or 1 CONFIRMED), CONFIRMED (≥4 SUSPECTED or ≥2 CONFIRMED).
 
 #### Scenario: Clean verdict
 
@@ -206,7 +217,8 @@ The system SHALL combine per-category verdicts using the decision matrix: CLEAN 
 
 ### Requirement: Report AI detection findings
 
-The system SHALL include a structured `## AI Detection` section in the coach review output containing the verdict, evidence list with marker IDs and locations, and an action request when verdict is SUSPECTED or CONFIRMED.
+The system SHALL include a structured `## AI Detection` section in the coach review output containing the verdict,
+evidence list with marker IDs and locations, and an action request when verdict is SUSPECTED or CONFIRMED.
 
 #### Scenario: Reports detection results in review
 

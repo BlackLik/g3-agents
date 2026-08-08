@@ -2,7 +2,9 @@
 
 ## Purpose
 
-Keep the repo-wide markdownlint baseline green so the root AGENTS.md verification contract (`npx markdownlint-cli2` passes with 0 errors) stays enforceable, with vendored and archived markdown excluded from lint scope and lint-driven edits limited to formatting.
+Keep the repo-wide markdownlint baseline green so the root AGENTS.md verification contract (`npx markdownlint-cli2`
+passes with 0 errors) stays enforceable, with vendored and archived markdown excluded from lint scope and lint-driven
+edits limited to formatting.
 
 ## Requirements
 
@@ -17,7 +19,8 @@ Running `npx markdownlint-cli2` from the repository root SHALL exit with 0 error
 
 ### Requirement: Lint scope excludes vendored and archived markdown
 
-The markdownlint configuration SHALL exclude vendored dependencies (`.opencode/node_modules/**`) and archived changes (`openspec/changes/archive/**`) from linting. Archived change documents SHALL NOT be edited to satisfy lint rules.
+The markdownlint configuration SHALL exclude vendored dependencies (`.opencode/node_modules/**`) and archived changes
+(`openspec/changes/archive/**`) from linting. Archived change documents SHALL NOT be edited to satisfy lint rules.
 
 #### Scenario: Vendored and archived files ignored
 
@@ -27,7 +30,8 @@ The markdownlint configuration SHALL exclude vendored dependencies (`.opencode/n
 
 ### Requirement: Lint fixes are formatting-only
 
-Lint-driven edits to agent prompts and live specs SHALL be limited to whitespace and formatting (table pipe spacing, blank lines around headings/lists). Coach prompt table fixes SHALL land in both ports in the same commit.
+Lint-driven edits to agent prompts and live specs SHALL be limited to whitespace and formatting (table pipe spacing,
+blank lines around headings/lists). Coach prompt table fixes SHALL land in both ports in the same commit.
 
 #### Scenario: Coach table normalization
 

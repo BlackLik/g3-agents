@@ -1,14 +1,18 @@
 # g3-agents — Multi-Agent Orchestration for OpenCode and Claude Code
 
-A set of agent configs (agents) for OpenCode with mediation, recursive task decomposition, and zero-tolerance review. No dependency installation required. A Claude Code port of the same system ships in `.claude/agents/`.
+A set of agent configs (agents) for OpenCode with mediation, recursive task decomposition, and zero-tolerance review. No
+dependency installation required. A Claude Code port of the same system ships in `.claude/agents/`.
 
 ## 📋 Purpose
 
-The system implements mediated multi-agent orchestration: four roles interact through a strict contract via an orchestrator (`@flow`), which decides on task decomposition, delegation, and reviewer verdicts. Agents **never communicate directly** — all inter-agent communication goes through `@flow`.
+The system implements mediated multi-agent orchestration: four roles interact through a strict contract via an
+orchestrator (`@flow`), which decides on task decomposition, delegation, and reviewer verdicts. Agents **never
+communicate directly** — all inter-agent communication goes through `@flow`.
 
 ## 🚀 Getting Started
 
-This project requires no dependency installation — once the `.opencode/agents/` directory is in place, OpenCode automatically discovers agents via YAML front-matter in compatible runtimes (e.g. Claude Code, OpenCode Skills).
+This project requires no dependency installation — once the `.opencode/agents/` directory is in place, OpenCode
+automatically discovers agents via YAML front-matter in compatible runtimes (e.g. Claude Code, OpenCode Skills).
 
 Send tasks to `@flow` — the orchestrator handles decomposition and coordination. A realistic flow with revision cycles:
 
@@ -86,11 +90,13 @@ User → @flow (orchestrator) → @player (executor) → @coach (reviewer)
                   REVISE/REJECT → instruction to player────────────┘
 ```
 
-`@coach` **never sends** revisions directly to `@player`. All verdicts go through `@flow`, which decides whether to continue the cycle or terminate.
+`@coach` **never sends** revisions directly to `@player`. All verdicts go through `@flow`, which decides whether to
+continue the cycle or terminate.
 
 ## ⚙️ How It Works
 
-The orchestrator decomposes tasks by complexity and caps recursion at depth 2. After all subtasks complete, a final merged review is requested from `@coach`.
+The orchestrator decomposes tasks by complexity and caps recursion at depth 2. After all subtasks complete, a final
+merged review is requested from `@coach`.
 
 ## 📐 Depth System
 

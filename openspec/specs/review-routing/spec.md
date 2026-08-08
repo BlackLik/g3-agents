@@ -8,7 +8,8 @@ Rules ensuring all review work is routed to @coach, never to @player.
 
 ### Requirement: All review tasks go to coach
 
-Flow SHALL route ALL review, verification, audit, and validation tasks to `@coach` via `subagent_type="coach"`. Flow SHALL NEVER route such tasks to `@player`.
+Flow SHALL route ALL review, verification, audit, and validation tasks to `@coach` via `subagent_type="coach"`. Flow
+SHALL NEVER route such tasks to `@player`.
 
 #### Scenario: Review after player execution
 
@@ -22,7 +23,8 @@ Flow SHALL route ALL review, verification, audit, and validation tasks to `@coac
 
 ### Requirement: Keyword-based routing enforcement
 
-Flow SHALL treat any task whose description or prompt contains any of the following keywords as review-only and route to `@coach`: "review", "check", "verify", "audit", "validate".
+Flow SHALL treat any task whose description or prompt contains any of the following keywords as review-only and route to
+`@coach`: "review", "check", "verify", "audit", "validate".
 
 #### Scenario: Task with review keyword
 
@@ -36,7 +38,8 @@ Flow SHALL treat any task whose description or prompt contains any of the follow
 
 ### Requirement: Player rejects review tasks
 
-If `@player` receives a task whose primary purpose is review, it SHALL reject it and return upward indicating the task should be routed to `@coach`.
+If `@player` receives a task whose primary purpose is review, it SHALL reject it and return upward indicating the task
+should be routed to `@coach`.
 
 #### Scenario: Review task misdirected to player
 

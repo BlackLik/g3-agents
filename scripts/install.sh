@@ -5,7 +5,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(dirname "$SCRIPT_DIR")"
 
 OPENCODE_FILES="flow.md subflow.md player.md coach.md"
+OPENCODE_REF_FILES="coach-reference.md flow-reference.md"
 CLAUDE_FILES="flow.md player.md coach.md"
+CLAUDE_REF_FILES="coach-reference.md flow-reference.md"
 
 usage() {
   echo "Usage: $0 <opencode|claude|all> [--global|--local]" >&2
@@ -32,11 +34,13 @@ install_one() {
 }
 
 if [ "$tool" = "opencode" ] || [ "$tool" = "all" ]; then
-  [ "$target" = "--global" ] && dest="$HOME/.config/opencode/agents" || dest="./.opencode/agents"
-  install_one "$REPO_ROOT/.opencode/agents" "$dest" "$OPENCODE_FILES"
+  [ "$target" = "--global" ] && base="$HOME/.config/opencode" || base="./.opencode"
+  install_one "$REPO_ROOT/.opencode/agents" "$base/agents" "$OPENCODE_FILES"
+  install_one "$REPO_ROOT/.opencode/reference" "$base/reference" "$OPENCODE_REF_FILES"
 fi
 
 if [ "$tool" = "claude" ] || [ "$tool" = "all" ]; then
-  [ "$target" = "--global" ] && dest="$HOME/.claude/agents" || dest="./.claude/agents"
-  install_one "$REPO_ROOT/.claude/agents" "$dest" "$CLAUDE_FILES"
+  [ "$target" = "--global" ] && base="$HOME/.claude" || base="./.claude"
+  install_one "$REPO_ROOT/.claude/agents" "$base/agents" "$CLAUDE_FILES"
+  install_one "$REPO_ROOT/.claude/reference" "$base/reference" "$CLAUDE_REF_FILES"
 fi

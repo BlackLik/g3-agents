@@ -8,7 +8,8 @@ Rules enforcing the mediated workflow cycle as unconditional priority.
 
 ### Requirement: Flow follows mediated cycle unconditionally
 
-Flow SHALL follow the full mediated workflow cycle (decompose → delegate to player → review with coach → repeat until accepted) for EVERY task, regardless of perceived simplicity, task type, or user request format.
+Flow SHALL follow the full mediated workflow cycle (decompose → delegate to player → review with coach → repeat until
+accepted) for EVERY task, regardless of perceived simplicity, task type, or user request format.
 
 #### Scenario: Simple one-line change
 
@@ -26,7 +27,8 @@ Flow SHALL follow the full mediated workflow cycle (decompose → delegate to pl
 
 ### Requirement: No direct answers
 
-Flow SHALL NEVER answer the user directly. Every user-facing response SHALL be mediated through the cycle — player produces content, coach reviews it, flow delivers it.
+Flow SHALL NEVER answer the user directly. Every user-facing response SHALL be mediated through the cycle — player
+produces content, coach reviews it, flow delivers it.
 
 #### Scenario: User asks "what is X?"
 
@@ -48,7 +50,8 @@ Flow SHALL NEVER skip the coach review step, even for tasks that appear trivial 
 
 ### Requirement: Cycle repeat on rejection
 
-When coach rejects a result, flow SHALL create a revision task for `@player` incorporating coach's findings, then repeat the cycle. Flow SHALL NOT bypass the cycle by applying coach's feedback directly.
+When coach rejects a result, flow SHALL create a revision task for `@player` incorporating coach's findings, then repeat
+the cycle. Flow SHALL NOT bypass the cycle by applying coach's feedback directly.
 
 #### Scenario: Coach rejects with findings
 
@@ -59,7 +62,9 @@ When coach rejects a result, flow SHALL create a revision task for `@player` inc
 
 ### Requirement: Pre-analysis phase gates the mediated cycle
 
-The mediated workflow cycle (decompose → delegate to player → review with coach → deliver) SHALL be preceded by the mandatory pre-action analysis phase. The cycle SHALL NOT begin until the analysis phase is complete and a plan is produced.
+The mediated workflow cycle (decompose → delegate to player → review with coach → deliver) SHALL be preceded by the
+mandatory pre-action analysis phase. The cycle SHALL NOT begin until the analysis phase is complete and a plan is
+produced.
 
 #### Scenario: Request received — analysis before cycle start
 
@@ -70,14 +75,16 @@ The mediated workflow cycle (decompose → delegate to player → review with co
 
 #### Scenario: Analysis produces different routing than default
 
-- **WHEN** the analysis phase determines that a request has a skill component (e.g., `/opsx-propose`) and a user component (e.g., "focus on X part")
+- **WHEN** the analysis phase determines that a request has a skill component (e.g., `/opsx-propose`) and a user
+  component (e.g., "focus on X part")
 - **THEN** flow SHALL route the skill component to @subflow or the appropriate skill agent
 - **THEN** flow SHALL route the user component to @player through the mediated cycle
 - **THEN** both paths SHALL end with @coach review before any result reaches the user
 
 ### Requirement: Analysis phase runs once per top-level request
 
-The analysis phase SHALL run exactly once per top-level user request. Recursive subflow delegations do not re-run analysis — they inherit the decomposition from the parent's plan.
+The analysis phase SHALL run exactly once per top-level user request. Recursive subflow delegations do not re-run
+analysis — they inherit the decomposition from the parent's plan.
 
 #### Scenario: Recursive subflow skips analysis
 
@@ -88,7 +95,10 @@ The analysis phase SHALL run exactly once per top-level user request. Recursive 
 
 ### Requirement: Flow pre-response self-check
 
-Before emitting any response, flow SHALL verify two conditions: (1) the response is an actual delegation tool call (not plain text), and (2) if the response delivers a result to the user, that result carries a ✅ Accepted verdict from `@coach`. If either check fails, flow SHALL self-correct by issuing the missing delegation instead of sending the response.
+Before emitting any response, flow SHALL verify two conditions: (1) the response is an actual delegation tool call (not
+plain text), and (2) if the response delivers a result to the user, that result carries a ✅ Accepted verdict from
+`@coach`. If either check fails, flow SHALL self-correct by issuing the missing delegation instead of sending the
+response.
 
 #### Scenario: Flow about to emit plain text
 

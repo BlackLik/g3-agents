@@ -6,7 +6,8 @@
 ## Core Contract
 
 - AGENTS.md files are binding work contracts for their subtrees
-- Work products, source materials, instructions, records, assets, and durable docs must stay understandable from the nearest applicable AGENTS.md plus every parent AGENTS.md above it
+- Work products, source materials, instructions, records, assets, and durable docs must stay understandable from the
+  nearest applicable AGENTS.md plus every parent AGENTS.md above it
 
 ## Read Before Editing
 
@@ -32,20 +33,26 @@ Update the closest owning AGENTS.md when a change affects:
 - user preferences about behavior, communication, process, organization, or quality
 - AGENTS.md creation, deletion, move, rename, or index contents
 
-Update parent docs when parent-level structure, ownership, workflow, or child index changes. Update child docs when parent changes alter local rules. Remove stale or contradictory text immediately. Small edits that do not change behavior or contracts may leave docs unchanged, but the DOX pass still must happen.
+Update parent docs when parent-level structure, ownership, workflow, or child index changes. Update child docs when
+parent changes alter local rules. Remove stale or contradictory text immediately. Small edits that do not change
+behavior or contracts may leave docs unchanged, but the DOX pass still must happen.
 
 ## Hierarchy
 
-- Root AGENTS.md is the DOX rail: project-wide instructions, global preferences, durable workflow rules, and the top-level Child DOX Index
+- Root AGENTS.md is the DOX rail: project-wide instructions, global preferences, durable workflow rules, and the
+  top-level Child DOX Index
 - Child AGENTS.md files own domain-specific instructions and their own Child DOX Index
 - Each parent explains what its direct children cover and what stays owned by the parent
 - The closer a doc is to the work, the more specific and practical must be
 
 ## Child Doc Shape
 
-- Create a child AGENTS.md when a folder becomes a durable boundary with its own purpose, rules, responsibilities, workflow, materials, or quality standards
-- Work Guidance must reflect the current standards of the project or user instructions; if there are no specific standards or instructions yet, leave it empty
-- Verification must reflect an existing check; if no verification framework exists yet, leave it empty and update it when one exists
+- Create a child AGENTS.md when a folder becomes a durable boundary with its own purpose, rules, responsibilities,
+  workflow, materials, or quality standards
+- Work Guidance must reflect the current standards of the project or user instructions; if there are no specific
+  standards or instructions yet, leave it empty
+- Verification must reflect an existing check; if no verification framework exists yet, leave it empty and update it
+  when one exists
 
 Default section order:
 
@@ -78,7 +85,8 @@ Default section order:
 ## Port Synchronization
 
 - `.opencode/agents/*.md` (OpenCode reference) is the source of truth for role behavior
-- Any change to a role body must land in both ports in the same commit; each port's AGENTS.md keeps an explicit list of its known divergences from the reference (model: "Deliberate divergences" in `/.claude/AGENTS.md`)
+- Any change to a role body must land in both ports in the same commit; each port's AGENTS.md keeps an explicit list of
+  its known divergences from the reference (model: "Deliberate divergences" in `/.claude/AGENTS.md`)
 - Sync is manual — no automated check; a new divergence goes into the port's divergence list in the same commit
 
 ## Verification
@@ -89,10 +97,13 @@ Default section order:
 
 When the user requests a durable behavior change, record it here or in the relevant child AGENTS.md
 
-- All repository content — agent prompts (including embedded example prompts and dialogue traces), docs, and planning artifacts — is written in English
+- All repository content — agent prompts (including embedded example prompts and dialogue traces), docs, and planning
+  artifacts — is written in English
 
 ## Child DOX Index
 
-- `.opencode/` — OpenCode multi-agent orchestration; orchestrator (flow/subflow), lazy executor (player), zero-tolerance reviewer (coach) in `agents/`. Reference implementation. See `/.opencode/AGENTS.md` for domain-specific rules.
-- `.claude/` — Claude Code port of the same system (flow/player/coach as Claude Code subagents; no subflow, flow recurses into itself). See `/.claude/AGENTS.md` for divergences and sync rules.
+- `.opencode/` — OpenCode multi-agent orchestration; orchestrator (flow/subflow), lazy executor (player), zero-tolerance
+  reviewer (coach) in `agents/`. Reference implementation. See `/.opencode/AGENTS.md` for domain-specific rules.
+- `.claude/` — Claude Code port of the same system (flow/player/coach as Claude Code subagents; no subflow, flow
+  recurses into itself). See `/.claude/AGENTS.md` for divergences and sync rules.
 - `scripts/` — install/uninstall scripts for both ports. See `/scripts/AGENTS.md`.
