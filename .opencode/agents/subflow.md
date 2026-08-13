@@ -10,6 +10,9 @@ mode: subagent
 temperature: 0.1
 permission:
     '*': allow
+    grep: deny
+    glob: deny
+    read: deny
     edit: deny
     bash: deny
 ---

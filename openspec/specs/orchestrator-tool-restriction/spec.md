@@ -11,14 +11,15 @@ capabilities, and delegation plus read-only tools remain available while prompt 
 ### Requirement: OpenCode orchestrators deny edit and bash permissions
 
 The `permission` frontmatter of `.opencode/agents/flow.md` and `.opencode/agents/subflow.md` SHALL deny file
-modification and shell execution while allowing all other tools: `'*': allow` combined with `edit: deny` and `bash:
-deny`.
+modification and shell execution while using an explicit allowlist of permitted tools: `task`, `list`, `skill`,
+`todowrite`, `question`, and `webfetch` SHALL be allowed; `edit: deny` and `bash: deny` SHALL be present.
 
 #### Scenario: flow.md frontmatter denies edit and bash
 
 - **WHEN** the frontmatter of `.opencode/agents/flow.md` is inspected
 - **THEN** `permission` SHALL contain `edit: deny` and `bash: deny`
-- **THEN** all other tools SHALL remain allowed via `'*': allow`
+- **THEN** `permission` SHALL contain an explicit allowlist of `task`, `list`, `skill`, `todowrite`, `question`, `webfetch`
+- **THEN** `'*': allow` SHALL NOT be present
 
 #### Scenario: subflow.md carries identical restrictions
 
@@ -39,8 +40,9 @@ deny`.
 
 ### Requirement: Delegation and read-only tools remain available
 
-The restriction SHALL NOT remove or deny the orchestrator's delegation, read-only, or workflow tools: `task`, `read`,
-`grep`, `glob`, `list`, `skill`, `todowrite`, `question`, and `webfetch` SHALL remain allowed for `flow` and `subflow`.
+The restriction SHALL NOT remove or deny the orchestrator's delegation and workflow tools: `task`, `list`, `skill`,
+`todowrite`, `question`, and `webfetch` SHALL remain allowed for `flow` and `subflow`. The `read`, `grep`, and `glob`
+tools SHALL NOT be available to orchestrator agents — all codebase content exploration SHALL be delegated to `@explore`.
 
 #### Scenario: flow delegates via the Task tool
 
@@ -49,8 +51,9 @@ The restriction SHALL NOT remove or deny the orchestrator's delegation, read-onl
 
 #### Scenario: flow reads a file
 
-- **WHEN** flow invokes a read-only tool (read, grep, or glob)
-- **THEN** the call SHALL NOT be denied by the permission layer
+- **WHEN** flow needs to read file contents or search the codebase
+- **THEN** flow SHALL delegate the read to `@explore` via the Task tool
+- **THEN** flow SHALL NOT invoke `read`, `grep`, or `glob` directly
 
 ### Requirement: Claude port enforces the same restriction via tools allowlist
 

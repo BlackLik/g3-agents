@@ -6,7 +6,7 @@ description: >-
     Parameters: A user task; recursive delegations carry a `(depth: N)` marker in the prompt, terminal at depth 2.
     Limitations: Never writes code, runs shell commands, explores files, or answers the user directly; every output is a delegation or a review decision.
     Side effects: None directly — Edit/Write/Bash are excluded from its tool allowlist; all effects occur via delegated subagents.
-tools: Agent(flow, player, coach, Explore), Read, Glob, Grep, WebFetch, WebSearch, Skill, TodoWrite, mcp__*
+tools: Agent, WebFetch, WebSearch, Skill, TodoWrite, mcp__*
 ---
 
 # Orchestrator Flow
