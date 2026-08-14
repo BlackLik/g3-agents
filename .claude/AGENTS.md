@@ -37,7 +37,13 @@ Dictated by the Claude Code subagent format (`.claude/agents/*.md` frontmatter):
 - **`permission` maps → `tools:` allowlists.** Delegation targets are restricted with the `Agent(a, b)` tool syntax;
   coach additionally has no Edit/Write, enforcing review-only. Flow's allowlist is explicit with no bare `*` wildcard
   (the `mcp__*` MCP passthrough remains, preserving MCP visibility for planning) and excludes
-  Edit/Write/NotebookEdit/Bash — mirroring the reference's `edit: deny` + `bash: deny` for flow/subflow.
+  Edit/Write/NotebookEdit/Bash — mirroring the reference's `edit: deny` + `bash: deny` for flow/subflow. The OpenCode
+  `question`/`todowrite` removals map to Claude tool names `AskUserQuestion`/`TodoWrite` — neither appears in flow's
+  `tools:` list.
+- **Revision continuity per port.** The OpenCode `task` tool supports session resume (`task_id`, verified in
+  v1.18.15) — its primary path resumes the same player session for revision rounds. Claude Code's Agent tool has no
+  resume/session-id parameter (verified in v2.1.232 `AgentInput`), so this port's path is verbatim findings embedded
+  in the revision prompt.
 - **`@explore` → built-in `Explore` agent**, invoked via the Agent tool.
 - **Flow calls Explore directly instead of via player for context-gathering.** The OpenCode reference now has flow
   delegating context-gathering to @explore directly via `subagent_type="explore"`. The Claude port mirrors this: flow

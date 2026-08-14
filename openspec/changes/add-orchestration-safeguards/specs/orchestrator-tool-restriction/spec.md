@@ -1,12 +1,6 @@
 # orchestrator-tool-restriction
 
-## Purpose
-
-Tool-level enforcement that orchestrator agents (flow, subflow) cannot modify files or run shell commands: frontmatter
-permissions deny `edit` and `bash` in the OpenCode port, the Claude port's tools allowlist excludes equivalent
-capabilities, and delegation plus read-only tools remain available while prompt bodies stay untouched.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: OpenCode orchestrators deny edit and bash permissions
 
@@ -64,23 +58,7 @@ delegated to `@explore`, and user interaction SHALL follow the `clarification-po
 - **THEN** flow SHALL NOT invoke an interactive question tool
 - **THEN** flow SHALL escalate via a mediated delivery per the `clarification-policy` capability
 
-### Requirement: Claude port enforces the same restriction via tools allowlist
-
-The `tools:` frontmatter of `.claude/agents/flow.md` SHALL be an explicit allowlist that grants delegation and read-only
-tools without any file-modifying or shell tools: it SHALL NOT contain the bare `*` wildcard (the `mcp__*` MCP
-passthrough is permitted, preserving MCP-tool visibility for planning) and SHALL NOT include Edit, Write, NotebookEdit,
-or Bash; it SHALL include the Agent tool (with flow, player, coach, and Explore targets) and read-only tools.
-
-#### Scenario: Claude flow has no edit, write, or bash tools
-
-- **WHEN** the `tools:` frontmatter of `.claude/agents/flow.md` is inspected
-- **THEN** it SHALL NOT contain the bare `*` wildcard, `Edit`, `Write`, `NotebookEdit`, or `Bash`
-- **THEN** it SHALL contain `Agent(flow, player, coach, Explore)` and read-only tools, and MAY contain `mcp__*`
-
-#### Scenario: Claude flow cannot invoke Write
-
-- **WHEN** the Claude-port flow subagent attempts to invoke Write, Edit, or Bash
-- **THEN** the tool SHALL be unavailable to the subagent
+## ADDED Requirements
 
 ### Requirement: Claude port flow has no interactive question tool
 
@@ -93,20 +71,3 @@ SHALL follow the `clarification-policy` capability.
 - **WHEN** the `tools:` frontmatter of `.claude/agents/flow.md` is inspected
 - **THEN** no interactive user-question tool and no todo-list tool SHALL be present
 - **THEN** it SHALL still contain `Agent(flow, player, coach, Explore)` and MAY contain `mcp__*`
-
-### Requirement: Prompt bodies are untouched by the restriction
-
-The restriction SHALL be implemented in frontmatter only. The prompt bodies of `.opencode/agents/flow.md` and
-`.opencode/agents/subflow.md` SHALL remain byte-identical to each other, and `.claude/agents/flow.md`'s body SHALL
-change only if its frontmatter reference requires it.
-
-#### Scenario: flow and subflow bodies stay byte-identical
-
-- **WHEN** `.opencode/agents/flow.md` and `.opencode/agents/subflow.md` are diffed after the change
-- **THEN** only frontmatter lines SHALL differ (name, description, mode)
-
-#### Scenario: Prompt invariants remain consistent with tool restriction
-
-- **WHEN** the orchestrator prompt bodies are reviewed after the frontmatter change
-- **THEN** the existing "never write code, never run commands" invariants SHALL still be present and SHALL NOT
-  contradict the enforced permissions

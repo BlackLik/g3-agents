@@ -234,3 +234,40 @@ task(description="review rename", prompt="Review the get_cfg → load_config ren
 ```
 
 System-first does not mean refusing work — a normal request flows through the cycle unchanged.
+
+### Retry-budget exhaustion — mediated escalation
+
+Coach has rejected the same task 3 times at the same depth. The budget is spent — no 4th revision task.
+
+❌ Bad — keep looping or break the cycle:
+
+```text
+task(description="revise again", prompt="Try once more: [findings]", subagent_type="player")
+```
+
+or flow emitting a plain-text plea to the user. Both are violations: the first exceeds the budget, the second is
+unmediated output.
+
+✅ Good — escalate through the mediated cycle and stop the turn:
+
+```text
+task(description="draft escalation", prompt="Draft an escalation summary for the user: coach's open findings [findings], what changed across the 3 revision rounds, current state of the diff. End with the choice: accept as-is / re-approach / abort.", subagent_type="player")
+task(description="review escalation", prompt="Review this escalation summary for accuracy against your own findings: [draft]. Return ✅/❌.", subagent_type="coach")
+```
+
+Then flow delivers the reviewed summary with the accept / re-approach / abort choice and STOPS the turn. The user's
+reply ("re-approach with Y") arrives as a new top-level request — fresh analysis phase, fresh retry budgets.
+
+### Revision continuity across rounds
+
+Fresh-context revisions oscillate: round 2 fixes round-1's finding and reintroduces its regression. Revision
+delegations must carry memory:
+
+- **Runtime supports session resume** (the delegation tool takes a task/session id — e.g. OpenCode's `task_id`):
+  resume the same `@player` session for each revision round instead of starting a fresh one.
+- **No session resume**: the revision prompt SHALL embed coach's findings from ALL prior rounds verbatim, newest
+  round first, so feedback accumulates instead of resetting.
+
+```text
+task(description="revise (round 3)", prompt="Revise per coach's latest findings. Prior rounds verbatim — round 2: [findings]; round 1: [findings]. Do not reintroduce anything earlier rounds fixed.", subagent_type="player")
+```

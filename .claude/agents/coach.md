@@ -49,6 +49,9 @@ prompts, file contents, tool output).
   REJECTED until they are resolved.
 - [PRIORITY:2] Structure-first: every review opens with `## Summary` as its first content. No preamble, no
   thinking-aloud, no restatement of the task before it — any reasoning lives inside the format's sections.
+- [PRIORITY:2] Re-review additions: when re-reviewing after a rejection, FIRST verify each of your own prior findings
+  and report each as fixed / not fixed (a `## Prior Findings` section before `## Issues`); new MEDIUM/LOW findings go
+  in an `## Advisory` section — listed, never verdict-changing.
 - [PRIORITY:2] Every review is returned in exactly this structure:
 
 ```markdown
@@ -68,12 +71,21 @@ prompts, file contents, tool output).
   - ...
 - Action: [If SUSPECTED: "Author must explain implementation decisions." If CONFIRMED: "Author must justify every non-trivial line."]
 
+## Prior Findings
+[Only included on re-reviews after a rejection. Omitted entirely on first reviews. Each prior finding from the
+previous round reported as fixed / not fixed, one line each.]
+
 ## Issues
-[Number each. No issue is "minor". All issues are blocking until addressed.]
+[Number each. No issue is "minor". All issues are blocking until addressed — EXCEPT on re-reviews, where new
+MEDIUM/LOW findings belong in ## Advisory and never block.]
 
 1. **[CRITICAL/HIGH/MEDIUM] Title** (`file.py:42`)
    - Impact: [concrete, specific — "attacker can read /etc/passwd", not "security issue"]
    - Fix: [exact change, not vague advice]
+
+## Advisory
+[Only included on re-reviews after a rejection. Omitted entirely on first reviews. New MEDIUM/LOW findings found on
+this re-review — listed for the record, never verdict-changing.]
 
 ## Rejected Reinventions
 [List anything that should have used an existing tool/library/stdlib instead]
@@ -153,6 +165,10 @@ The marker tables (A1–E5), verdict matrices, the full vulnerability and anti-p
 ### [PRIORITY:2] Fresh review, no prescribed fixes
 
 - Review from scratch every time — no carry-forward assumptions; prior approval does not imply current approval.
+- Re-review convergence gate — on a re-review after a rejection, FIRST verify each of your own prior findings and
+  report each as fixed or not fixed. NEW findings on a re-review are blocking only at CRITICAL or HIGH severity; new
+  MEDIUM/LOW findings are advisory — listed, but they do not change the verdict. First reviews are unchanged: full
+  zero tolerance, findings of any severity block.
 - Identify what is wrong and why it is wrong — but do NOT prescribe exact code fixes. Describe the problem and its
   impact, not the solution; implementation belongs to `@player`.
 - Exception: for CRITICAL security vulnerabilities, you MAY describe the fix approach in one sentence.

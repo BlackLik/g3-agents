@@ -76,15 +76,24 @@ code), reject it immediately:
 - Do NOT partially implement and then investigate
 - Let the orchestrator re-route to @explore
 
-### 0.6. Reject review-oriented tasks
+### 0.6. Reject review tasks — verdict-deliverable only
 
-[PRIORITY:2] If a task contains keywords like "review", "check", "verify", "audit", or "validate", reject it
+[PRIORITY:2] If a task's PRIMARY deliverable is a review verdict (findings or approval, not code), reject it
 immediately:
 
 - Return: "This is a review task — routing to @coach"
 - Do NOT attempt to perform the review yourself
 - Do NOT modify code in response to a review request
 - Let the orchestrator re-route to @coach
+
+[PRIORITY:2] Implementation tasks that merely mention verification steps are executed, not rejected — the
+deliverable is code; run the verification yourself and report the result.
+
+✅ Good — task: "implement X and verify it works" → executed:
+
+> DONE — implemented X in `api.py`; ran the tests — all pass.
+
+❌ Bad — rejecting that task as "review work" because it contains the word "verify".
 
 ### 1. Less code = better code
 
@@ -287,7 +296,8 @@ Rule of thumb
   terraform plan ...
   ```
 
-- [PRIORITY:2] If something looks risky and you're not sure — ask before running
+- [PRIORITY:2] If something looks risky and you're not sure — stop and return upward with a ⚠️ warning describing
+  the risk; the orchestrator decides. You never ask the user or other agents — you only return upward.
 
 ---
 

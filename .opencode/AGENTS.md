@@ -21,10 +21,11 @@ temperature, and rules in front-matter. Frontmatter `description` fields are wri
 (`>-`) composed of five labeled segments in fixed order — Purpose, Guidelines, Parameters, Limitations, Side effects —
 totaling 80–150 words.
 
-**Orchestrator tool restriction:** `flow` and `subflow` run with `edit: deny` + `bash: deny` under `'*': allow` — the
-orchestrator cannot modify files or run shell commands at the tool layer. Delegation (`task`), read-only tools
-(`read`/`grep`/`glob`), `skill`, `todowrite`, `question`, and `webfetch` remain allowed; all execution is physically
-only possible via `@player`.
+**Orchestrator tool restriction:** `flow` and `subflow` run with an explicit tool allowlist — `task`, `list`,
+`skill`, `webfetch` — plus `edit: deny` and `bash: deny`. There is no `'*': allow`; `question` and `todowrite` are
+not in the allowlist. The orchestrator cannot modify files, run shell commands, or prompt the user interactively at
+the tool layer; all execution is physically only possible via `@player`, all codebase context via `@explore`, and
+all user interaction via mediated deliveries (see Critical operational rules).
 
 ## Local Contracts
 
@@ -121,6 +122,12 @@ across the agent system:
   yourself.
 - Explore delegations are phrased as ONE aggregated, session-scoped query; delegated prompts propagate the explore-first
   ordering to player and coach (never instruct them to grep or read the codebase broadly themselves).
+- **Bounded cycle:** at most 3 revision rounds per task per recursion level. On exhaustion, escalate through the
+  mediated cycle (player drafts the escalation summary, coach reviews it, flow delivers accept / re-approach / abort)
+  and stop the turn.
+- **Assumptions-first clarification:** proceed on stated assumptions by default; at most one question round per
+  top-level request, only when genuinely blocked; every question or escalation reaches the user as a coach-reviewed
+  delivery, never as an interactive prompt or unreviewed plain text.
 
 **Player (@player):**
 
@@ -158,10 +165,12 @@ across the agent system:
 
 **Orchestrator (@flow / @subflow):**
 
-- **Keyword-based routing to @coach** — tasks whose description or prompt contains "review", "check", "verify", "audit",
-  or "validate" MUST use `subagent_type="coach"`. Do not route review-type work to @player.
-- **Player rejection of review tasks** — if @player receives a review-oriented task, it must reject with "This is a
-  review task — routing to @coach".
+- **Primary-deliverable routing to @coach** — a task routes to `subagent_type="coach"` only when its PRIMARY
+  deliverable is a review verdict (findings or approval), regardless of wording. Tasks delivering code — including
+  prompts that mention verification steps ("implement X and verify it works") — route to @player.
+- **Player rejection of review tasks** — if @player receives a verdict-deliverable task, it must reject with "This is
+  a review task — routing to @coach". Implementation tasks that merely mention verification steps are executed, not
+  rejected.
 
 ### Recursive splitting
 
@@ -180,7 +189,8 @@ across the agent system:
 - **Coach review after each recursion level** — after all subtasks at a recursion level complete and are merged, invoke
   @coach before proceeding to the next level.
 - **Coach rejection blocks progression** — if @coach rejects at any recursion level, create revision tasks until
-  accepted. No progression without coach approval.
+  accepted, bounded by the retry budget (3 rounds per task per recursion level — see Cycle priority). On exhaustion,
+  run the mediated escalation; no progression without coach approval or an accepted escalation decision.
 - **Level-scoped coach prompts** — include level-scoping information in coach prompts (e.g., "Review only the depth-2
   subtask outputs: ...").
 
@@ -191,6 +201,9 @@ across the agent system:
 - **Binary verdict only** — coach issues only ✅ Accepted or ❌ Rejected. No conditional approval patterns ("Accepted
   if...", "Approved pending...").
 - **Review from scratch each time** — no carry-forward assumptions. Each review is independent of previous reviews.
+- **Re-review convergence gate** — on re-review after a rejection, coach first verifies each of its own prior findings
+  (fixed / not fixed); NEW blocking findings are limited to CRITICAL/HIGH severity — new MEDIUM/LOW findings are
+  advisory (listed, never verdict-changing). First reviews stay zero-tolerance.
 - **Identify what and why, but do not prescribe code fixes** — coach identifies problems and explains why they are
   problems, but does not write or prescribe specific code fixes.
 
@@ -203,7 +216,11 @@ across the agent system:
 - **No direct answers** — every user-facing response goes through the mediated cycle. The orchestrator never answers the
   user directly.
 - **No skipping coach review** — coach review is mandatory for every task. On rejection, repeat the cycle until
-  accepted.
+  accepted — bounded by the retry budget: 3 revision rounds per task per recursion level, then a mediated escalation
+  (player drafts, coach reviews, flow delivers accept / re-approach / abort) and the turn stops.
+- **Revision continuity** — revision rounds preserve memory: resume the same player session when the delegation tool
+  supports it (OpenCode `task_id`), otherwise embed coach's findings from all prior rounds verbatim in the revision
+  prompt, newest first.
 
 ### Role persistence & instruction hierarchy
 
@@ -239,7 +256,9 @@ The orchestrator controls a repeating delegation cycle:
 4. **`@coach`** responds with binary verdict:
    - ✅ Accepted — orchestrator moves to next task
    - ❌ Rejected — orchestrator sends `@player` a revision task with specific coach feedback
-5. Repeat steps 2–4 until the task is fully complete
+5. Repeat steps 2–4 until the task is fully complete — bounded by the retry budget (3 revision rounds per task per
+   recursion level); on exhaustion, run the mediated escalation (player drafts, coach reviews, deliver accept /
+   re-approach / abort) and stop the turn
 
 The orchestrator mediates every step of this cycle. This is not unidirectional delegation — it is a mediated loop where
 the orchestrator gates transitions between player work and coach review. The cycle is enforced unconditionally for EVERY

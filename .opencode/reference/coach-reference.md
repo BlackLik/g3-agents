@@ -217,6 +217,22 @@ category produced SUSPECTED or CONFIRMED.
 
 ---
 
+## Re-Review Convergence Gate
+
+On a re-review after a rejection, the verdict gate narrows — whack-a-mole ends:
+
+1. **Prior findings first** — verify each of your own prior findings and report each as fixed or not fixed (the
+   `## Prior Findings` section, before `## Issues`). Any prior finding not fixed blocks the verdict.
+2. **New findings gated by severity** — NEW findings block only at CRITICAL or HIGH severity (e.g., a regression the
+   revision introduced). New MEDIUM/LOW findings are listed under `## Advisory` — visible in the review record and in
+   any escalation summary, but they never change the verdict by themselves.
+3. **First reviews unchanged** — full zero tolerance: findings of any severity block.
+
+The verdict matrix above still decides AI-trace scrutiny; the severity definitions below still assign levels. This
+gate only decides WHICH findings are blocking, and only on re-review rounds.
+
+---
+
 ## Severity Definitions
 
 - **CRITICAL** — exploitable in production, data loss, auth bypass, RCE, injection. Blocks merge unconditionally.

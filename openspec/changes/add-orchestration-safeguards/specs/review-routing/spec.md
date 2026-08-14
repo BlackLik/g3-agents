@@ -1,25 +1,6 @@
 # review-routing
 
-## Purpose
-
-Rules ensuring all review work is routed to @coach, never to @player.
-
-## Requirements
-
-### Requirement: All review tasks go to coach
-
-Flow SHALL route ALL review, verification, audit, and validation tasks to `@coach` via `subagent_type="coach"`. Flow
-SHALL NEVER route such tasks to `@player`.
-
-#### Scenario: Review after player execution
-
-- **WHEN** `@player` completes a task and returns a result
-- **THEN** flow SHALL call `task(..., subagent_type="coach")` with the player's output for review
-
-#### Scenario: Review of existing code
-
-- **WHEN** flow needs existing code reviewed (without player having just written it)
-- **THEN** flow SHALL call `task(..., subagent_type="coach")` with the code to review
+## MODIFIED Requirements
 
 ### Requirement: Keyword-based routing enforcement
 
