@@ -29,8 +29,8 @@ contract.
 Fresh session per invocation, no resume — Claude Code's Agent tool has no resume/session-id parameter (verified in
 v2.1.232 `AgentInput`), and the reference abandoned its resume path too, so both ports run the same rule: revision
 prompts embed all prior coach findings verbatim (newest first), and inter-session context travels in a text handoff
-file in the OS temp dir. `player` writes it on behalf of any write-less agent (a ROLE-level rule — `coach.md` here has
-Bash, but the write stays player's); the next session's `player` reads it; orchestrators pass only the path plus their
+file in the OS temp dir. `player` writes it on behalf of any write-less agent (tool-enforced for `coach.md` here — its
+allowlist has no write-capable tool); the next session's `player` reads it; orchestrators pass only the path plus their
 own composed digest.
 
 ### Deliberate divergences from the OpenCode port
@@ -49,11 +49,13 @@ Dictated by the Claude Code subagent format (`.claude/agents/*.md` frontmatter):
 - **No `temperature`.** Claude Code frontmatter does not support it; the OpenCode per-role temperatures (flow 0.1, coach
   0.2, player 0.6) are dropped.
 - **`permission` maps → `tools:` allowlists.** Delegation targets are restricted with the `Agent(a, b)` tool syntax;
-  coach additionally has no Edit/Write, enforcing review-only. Flow's allowlist is explicit with no bare `*` wildcard
-  (the `mcp__*` MCP passthrough remains, preserving MCP visibility for planning) and excludes
-  Edit/Write/NotebookEdit/Bash — mirroring the reference's `edit: deny` + `bash: deny` for flow/subflow. The OpenCode
-  `question`/`todowrite` removals map to Claude tool names `AskUserQuestion`/`TodoWrite` — neither appears in flow's
-  `tools:` list.
+  no agent allowlist carries a bare `*` wildcard — MCP passthrough is always the narrow `mcp__*` pattern. Coach's
+  allowlist is `Read, Agent(Explore, coach), mcp__*` — review-only at the tool layer, mirroring the reference's denies
+  of `bash`/`edit`/`grep`/`glob`/`webfetch`/`websearch`/`skill`; `Read` stays unscoped because Claude `tools:` cannot
+  express the reference's `*/reference/*.md`-only read grant. Player keeps its explicit broad-executor list with
+  `mcp__*` instead of `*`. Flow's allowlist is explicit and excludes Edit/Write/NotebookEdit/Bash — mirroring the
+  reference's `edit: deny` + `bash: deny` for flow/subflow. The OpenCode `question`/`todowrite` removals map to Claude
+  tool names `AskUserQuestion`/`TodoWrite` — neither appears in flow's `tools:` list.
 - **Tool-layer enforcement lives only in the OpenCode port.** The OpenCode `permission:` maps physically enforce the
   deny-by-default allowlists (flow/subflow: `task`+`skill`+reference-scoped `read`, plus `question` on flow only).
   This port's `tools:` lists are NOT updated to mirror every OpenCode permission change — role behavior is carried by

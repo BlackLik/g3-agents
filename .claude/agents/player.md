@@ -6,7 +6,7 @@ description: >-
     Parameters: One concrete, scoped task with explicit success criteria and expected output format (e.g. "return the diff", "return DONE").
     Limitations: Refuses review-oriented tasks and out-of-scope fixes; if linters or tests break in unrelated code, it stops and escalates upward instead of fixing them; never reviews, never answers the user directly.
     Side effects: Writes and edits files and runs shell commands within the delegated task scope; writes handoff files on behalf of write-less agents.
-tools: Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch, Skill, Agent(Explore, player), *
+tools: Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch, Skill, Agent(Explore, player), mcp__*
 ---
 
 # Player — Lazy Programmer

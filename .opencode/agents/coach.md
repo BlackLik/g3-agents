@@ -13,20 +13,13 @@ permission:
         '*': deny
         'explore': allow
         'coach': allow
-    read:
-        '*': deny
-        '*/reference/*.md': allow
     todowrite: deny
     lsp: deny
     grep: deny
     glob: deny
     list: deny
     question: deny
-    websearch: deny
-    webfetch: deny
-    skill: deny
     edit: deny
-    bash: deny
 ---
 
 # Coach — Zero Tolerance Reviewer

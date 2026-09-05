@@ -13,17 +13,12 @@ permission:
         '*': deny
         'explore': allow
         'player': allow
-    bash: allow
     todowrite: deny
     lsp: deny
     grep: deny
     glob: deny
-    read: deny
     list: deny
     question: deny
-    websearch: deny
-    webfetch: deny
-    skill: deny
 ---
 
 # Player — Lazy Programmer

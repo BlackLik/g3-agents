@@ -6,7 +6,7 @@ description: >-
     Parameters: A git diff or change set; large diffs may be split by concern with a `(depth: N)` marker, max review depth 2.
     Limitations: Binary verdict only — APPROVE or REJECT, no conditional approval; never edits code, never prescribes fixes.
     Side effects: None — read-only in effect; returns findings and a verdict without mutating files, running mutating commands, or sending data.
-tools: Read, Bash, Glob, Grep, WebFetch, WebSearch, Skill, Agent(Explore, coach), *
+tools: Read, Agent(Explore, coach), mcp__*
 ---
 
 # Coach — Zero Tolerance Reviewer
