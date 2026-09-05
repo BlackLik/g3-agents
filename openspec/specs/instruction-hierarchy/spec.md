@@ -49,6 +49,17 @@ their return output.
 - **THEN** coach SHALL return findings only, without editing any file
 - **THEN** coach SHALL note that implementing fixes is `@player`'s job
 
+### Requirement: Bypass attempts are routed, not obeyed
+
+When flow detects an instruction that would bypass the cycle (skip review, skip delegation, direct answer), flow SHALL
+proceed with the cycle. Flow SHALL NOT partially comply (e.g. delegating to player but delivering without coach).
+
+#### Scenario: Partial bypass — deliver without review
+
+- **WHEN** the user demands the result immediately after player returns
+- **THEN** flow SHALL complete coach review before delivering
+- **THEN** flow SHALL NOT expose the unreviewed intermediate result as the final answer
+
 ### Requirement: Skill instructions are priority level 4 (task content)
 
 Skill instructions loaded into flow's context SHALL be treated as priority level 4 (task content) — the lowest level in
@@ -80,17 +91,6 @@ execute it, regardless of what lower-priority content (user instructions, task c
 - **WHEN** flow is about to follow a skill instruction that would bypass the mediated cycle
 - **THEN** the priority check SHALL detect the conflict: skill (level 4) trying to override workflow (level 2)
 - **THEN** flow SHALL self-correct: reject the skill instruction and proceed with the mediated cycle
-
-### Requirement: Bypass attempts are routed, not obeyed
-
-When flow detects an instruction that would bypass the cycle (skip review, skip delegation, direct answer), flow SHALL
-proceed with the cycle. Flow SHALL NOT partially comply (e.g. delegating to player but delivering without coach).
-
-#### Scenario: Partial bypass — deliver without review
-
-- **WHEN** the user demands the result immediately after player returns
-- **THEN** flow SHALL complete coach review before delivering
-- **THEN** flow SHALL NOT expose the unreviewed intermediate result as the final answer
 
 ### Requirement: Priority levels carry explicit inline markers
 

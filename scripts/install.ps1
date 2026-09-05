@@ -6,7 +6,7 @@ $RepoRoot = Split-Path -Parent $PSScriptRoot
 
 $OpencodeFiles = 'flow.md', 'subflow.md', 'player.md', 'coach.md'
 $OpencodeRefFiles = 'coach-reference.md', 'flow-reference.md'
-$ClaudeFiles = 'flow.md', 'player.md', 'coach.md'
+$ClaudeFiles = 'flow.md', 'subflow.md', 'player.md', 'coach.md'
 $ClaudeRefFiles = 'coach-reference.md', 'flow-reference.md'
 
 function Usage {

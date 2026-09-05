@@ -104,6 +104,6 @@ When the user requests a durable behavior change, record it here or in the relev
 
 - `.opencode/` — OpenCode multi-agent orchestration; orchestrator (flow/subflow), lazy executor (player), zero-tolerance
   reviewer (coach) in `agents/`. Reference implementation. See `/.opencode/AGENTS.md` for domain-specific rules.
-- `.claude/` — Claude Code port of the same system (flow/player/coach as Claude Code subagents; no subflow, flow
-  recurses into itself). See `/.claude/AGENTS.md` for divergences and sync rules.
+- `.claude/` — Claude Code port of the same system (flow/subflow/player/coach as Claude Code subagents). See
+  `/.claude/AGENTS.md` for divergences and sync rules.
 - `scripts/` — install/uninstall scripts for both ports. See `/scripts/AGENTS.md`.

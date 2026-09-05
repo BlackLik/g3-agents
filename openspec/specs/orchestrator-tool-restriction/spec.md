@@ -10,23 +10,31 @@ capabilities, and delegation plus read-only tools remain available while prompt 
 
 ### Requirement: OpenCode orchestrators deny edit and bash permissions
 
-The `permission` frontmatter of `.opencode/agents/flow.md` and `.opencode/agents/subflow.md` SHALL deny file
-modification and shell execution while using an explicit allowlist of permitted tools: `task`, `list`, `skill`,
-and `webfetch` SHALL be allowed; `edit: deny` and `bash: deny` SHALL be present. The `question` and `todowrite`
-tools SHALL NOT be in the allowlist.
+The `permission` frontmatter of `.opencode/agents/flow.md` and `.opencode/agents/subflow.md` SHALL use a deny-by-default
+base (`'*': deny`) with an explicit allowlist. The allowlist SHALL contain: `task` (restricted to the `player`,
+`coach`, `explore`, and `subflow` targets), `skill`, and a `read` grant scoped to reference-tier files only
+(`*/reference/*.md`). `flow` (primary, depth 0) SHALL additionally contain `question: allow`; `subflow` SHALL NOT.
+`edit`, `bash`, `grep`, `glob`, `list`, `lsp`, `webfetch`, `websearch`, and `todowrite` SHALL be denied.
 
 #### Scenario: flow.md frontmatter denies edit and bash
 
 - **WHEN** the frontmatter of `.opencode/agents/flow.md` is inspected
-- **THEN** `permission` SHALL contain `edit: deny` and `bash: deny`
-- **THEN** `permission` SHALL contain an explicit allowlist of `task`, `list`, `skill`, `webfetch`
-- **THEN** `'*': allow` SHALL NOT be present
-- **THEN** `question` and `todowrite` SHALL NOT be present
+- **THEN** `permission` SHALL contain `'*': deny` with an explicit allowlist (no `'*': allow`)
+- **THEN** `task` SHALL be allowed for the `player`, `coach`, `explore`, and `subflow` targets only
+- **THEN** `skill` and `question` SHALL be allowed
+- **THEN** `read` SHALL be denied except for `*/reference/*.md`
+- **THEN** `edit`, `bash`, `grep`, `glob`, `list`, `lsp`, `webfetch`, `websearch`, and `todowrite` SHALL be denied
 
 #### Scenario: subflow.md carries identical restrictions
 
 - **WHEN** the frontmatter of `.opencode/agents/subflow.md` is inspected
-- **THEN** its `permission` block SHALL be identical to `.opencode/agents/flow.md`'s `permission` block
+- **THEN** its `permission` block SHALL match `.opencode/agents/flow.md`'s except that `question: allow` is absent
+
+#### Scenario: flow.md frontmatter grants question, subflow.md does not
+
+- **WHEN** the frontmatter of `.opencode/agents/flow.md` and `.opencode/agents/subflow.md` are compared
+- **THEN** `flow.md` SHALL contain `question: allow`
+- **THEN** `subflow.md` SHALL NOT contain `question: allow`
 
 #### Scenario: flow attempts to edit a file
 
@@ -36,77 +44,57 @@ tools SHALL NOT be in the allowlist.
 
 #### Scenario: flow attempts to run a shell command
 
-- **WHEN** flow attempts to invoke the bash tool
+- **WHEN** flow attempts to invoke the bash, webfetch, websearch, or lsp tool
 - **THEN** the tool layer SHALL deny the call with a permission error
-- **THEN** flow SHALL recover by delegating the command to `@player` via the Task tool
+- **THEN** flow SHALL recover by delegating the work to `@player` or `@explore` via the Task tool
 
 ### Requirement: Delegation and read-only tools remain available
 
-The restriction SHALL NOT remove or deny the orchestrator's delegation and workflow tools: `task`, `list`,
-`skill`, and `webfetch` SHALL remain allowed for `flow` and `subflow`. The `read`, `grep`, `glob`, `question`,
-and `todowrite` tools SHALL NOT be available to orchestrator agents — all codebase content exploration SHALL be
-delegated to `@explore`, and user interaction SHALL follow the `clarification-policy` capability.
+The restriction SHALL NOT remove the orchestrator's delegation and workflow tools: `task` (targets `player`, `coach`,
+`explore`, `subflow`) and `skill` SHALL remain allowed for `flow` and `subflow`, and a `read` grant scoped to
+`*/reference/*.md` SHALL remain for loading the reference tier. The `grep`, `glob`, `list`, `webfetch`, `websearch`,
+and `todowrite` tools SHALL NOT be available to orchestrator agents — all codebase content exploration and web
+information gathering SHALL be delegated to `@explore`. User interaction SHALL follow the `clarity-gate` capability:
+`flow` (depth 0) MAY use the interactive `question` tool for one bounded round; `subflow` SHALL NOT.
 
 #### Scenario: flow delegates via the Task tool
 
-- **WHEN** flow invokes the Task tool with `subagent_type="player"`, `"coach"`, or `"explore"`
+- **WHEN** flow invokes the Task tool with `subagent_type="player"`, `"coach"`, `"explore"`, or `"subflow"`
 - **THEN** the call SHALL NOT be denied by the permission layer
+- **WHEN** flow invokes the Task tool with any other subagent type
+- **THEN** the call SHALL be denied
 
 #### Scenario: flow reads a file
 
-- **WHEN** flow needs to read file contents or search the codebase
-- **THEN** flow SHALL delegate the read to `@explore` via the Task tool
-- **THEN** flow SHALL NOT invoke `read`, `grep`, or `glob` directly
+- **WHEN** flow needs file contents, codebase search, or web content
+- **THEN** flow SHALL delegate the gathering to `@explore` via the Task tool
+- **THEN** flow SHALL NOT invoke `read`, `grep`, `glob`, `webfetch`, or `websearch` directly
+- **THEN** the sole `read` exception SHALL be files under `*/reference/*.md`
+
+#### Scenario: flow loads its reference tier
+
+- **WHEN** a core-tier load trigger fires and flow reads `reference/flow-reference.md`
+- **THEN** the scoped `read` grant SHALL allow the call
 
 #### Scenario: flow needs user input
 
-- **WHEN** flow needs clarification from the user
-- **THEN** flow SHALL NOT invoke an interactive question tool
-- **THEN** flow SHALL escalate via a mediated delivery per the `clarification-policy` capability
+- **WHEN** flow (depth 0) is materially blocked per the `clarity-gate` capability
+- **THEN** flow MAY invoke the interactive `question` tool for one bounded round
+- **WHEN** a subflow (depth ≥1) needs user input
+- **THEN** it SHALL NOT have the `question` tool and SHALL follow the mediated fallback
 
-### Requirement: Claude port enforces the same restriction via tools allowlist
+### Requirement: flow and subflow bodies remain byte-identical
 
-The `tools:` frontmatter of `.claude/agents/flow.md` SHALL be an explicit allowlist that grants delegation and read-only
-tools without any file-modifying or shell tools: it SHALL NOT contain the bare `*` wildcard (the `mcp__*` MCP
-passthrough is permitted, preserving MCP-tool visibility for planning) and SHALL NOT include Edit, Write, NotebookEdit,
-or Bash; it SHALL include the Agent tool (with flow, player, coach, and Explore targets) and read-only tools.
+The prompt bodies of `.opencode/agents/flow.md` and `.opencode/agents/subflow.md` SHALL remain byte-identical to each
+other after any change; only frontmatter lines (name, description, mode, permission) MAY differ.
 
-#### Scenario: Claude flow has no edit, write, or bash tools
+#### Scenario: Bodies stay byte-identical after the change
 
-- **WHEN** the `tools:` frontmatter of `.claude/agents/flow.md` is inspected
-- **THEN** it SHALL NOT contain the bare `*` wildcard, `Edit`, `Write`, `NotebookEdit`, or `Bash`
-- **THEN** it SHALL contain `Agent(flow, player, coach, Explore)` and read-only tools, and MAY contain `mcp__*`
-
-#### Scenario: Claude flow cannot invoke Write
-
-- **WHEN** the Claude-port flow subagent attempts to invoke Write, Edit, or Bash
-- **THEN** the tool SHALL be unavailable to the subagent
-
-### Requirement: Claude port flow has no interactive question tool
-
-The `tools:` frontmatter of `.claude/agents/flow.md` SHALL NOT include any tool whose purpose is asking the user
-an interactive question (e.g., AskUserQuestion) or managing todo lists. User interaction in the Claude port
-SHALL follow the `clarification-policy` capability.
-
-#### Scenario: Claude flow allowlist inspected
-
-- **WHEN** the `tools:` frontmatter of `.claude/agents/flow.md` is inspected
-- **THEN** no interactive user-question tool and no todo-list tool SHALL be present
-- **THEN** it SHALL still contain `Agent(flow, player, coach, Explore)` and MAY contain `mcp__*`
-
-### Requirement: Prompt bodies are untouched by the restriction
-
-The restriction SHALL be implemented in frontmatter only. The prompt bodies of `.opencode/agents/flow.md` and
-`.opencode/agents/subflow.md` SHALL remain byte-identical to each other, and `.claude/agents/flow.md`'s body SHALL
-change only if its frontmatter reference requires it.
-
-#### Scenario: flow and subflow bodies stay byte-identical
-
-- **WHEN** `.opencode/agents/flow.md` and `.opencode/agents/subflow.md` are diffed after the change
-- **THEN** only frontmatter lines SHALL differ (name, description, mode)
+- **WHEN** `.opencode/agents/flow.md` and `.opencode/agents/subflow.md` are diffed after stripping frontmatter
+- **THEN** the bodies SHALL be identical
 
 #### Scenario: Prompt invariants remain consistent with tool restriction
 
 - **WHEN** the orchestrator prompt bodies are reviewed after the frontmatter change
-- **THEN** the existing "never write code, never run commands" invariants SHALL still be present and SHALL NOT
-  contradict the enforced permissions
+- **THEN** the role invariants ("never write code, never run commands, never answer directly") SHALL still be present
+- **THEN** the clarity-gate rule SHALL be the only sanctioned non-`task` output and SHALL NOT contradict the invariants

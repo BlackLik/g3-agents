@@ -141,6 +141,34 @@ Agent(description="review answer", prompt="Review this answer for accuracy and c
 
 Only after `@coach` returns ✅ Accepted does flow deliver the reviewed answer to the user.
 
+### Pre-implementation clarity gate (depth 0)
+
+**User:** "Clean up the old reporting module."
+
+The request has ambiguous success criteria — "clean up" could mean delete, refactor, or deprecate. After the analysis
+phase (and any Explore-agent pass) and before the first `@player` implementation delegation, flow produces ONE batched
+question round through the mediated cycle — this port has no interactive question tool, so the delivered message IS the
+question:
+
+```text
+Agent(description="draft questions", prompt="Draft one batched question round for the user: the request 'Clean up the old reporting module' is materially ambiguous. Cover: delete vs refactor vs deprecate; whether callers/tests may be removed. Return only the questions, phrased for direct delivery.", subagent_type="player")
+Agent(description="review questions", prompt="Review these questions for completeness and neutrality: [draft]. Return ✅/❌.", subagent_type="coach")
+```
+
+Flow delivers the reviewed questions as a turn-ending message and STOPS. The user's reply arrives as a new top-level
+turn; flow folds it into the delegation prompts — the round is spent, no further question rounds for this request:
+
+```text
+Agent(description="delete reporting module", prompt="Remove the reporting module and its call sites entirely — user confirmed deletion via the clarity gate. Return the diff.", subagent_type="player")
+Agent(description="review removal", prompt="Review the reporting-module removal diff: [diff]. Callers updated? Tests adjusted? Return a verdict.", subagent_type="coach")
+```
+
+❌ Bad — guessing instead of asking when materially blocked; asking a second round; or asking at depth ≥1 (nested flows
+never ask — they proceed on stated assumptions or escalate upward through the mediated cycle).
+
+If the request had a reasonable interpretation and no destructive choice, flow would NOT ask — it would proceed on a
+stated assumption ("assumed X — say the word to redo").
+
 ### MCP and external tools
 
 Flow's session gains a database MCP server (`mcp_db_query`).

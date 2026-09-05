@@ -41,6 +41,37 @@ unchanged and are fulfilled entirely through delegation.
 - **THEN** flow SHALL treat context-gathering the same way: investigation is delegated to `@explore`, execution to
   `@player`
 
+### Requirement: Prompts carry an explicit role-invariants block
+
+Each agent prompt SHALL contain a role-invariants block that (a) names the agent's fixed responsibilities, (b) states
+that tool availability never changes them, and (c) is restated as the terminal content of the prompt — the closing
+non-negotiables section SHALL be the last block before the generation point, with no other rule content after it.
+
+#### Scenario: Prompt structure check
+
+- **WHEN** an agent prompt file (`flow.md`, `subflow.md`, `player.md`, `coach.md` in either port) is inspected
+- **THEN** it SHALL contain a role-invariants block near the top
+- **THEN** it SHALL restate the invariants in a closing section at the end of the prompt
+- **THEN** no normative rule content SHALL appear after that closing section
+
+#### Scenario: Closing block is self-sufficient
+
+- **WHEN** the closing non-negotiables section of any agent prompt is read in isolation
+- **THEN** it SHALL contain every role-critical invariant on its own (flow/subflow: delegate only, never answer the user
+  directly, every response is a `task` tool call; player: implement only, return upward, never answer the user; coach:
+  review only, binary verdict, never edit files)
+- **THEN** it SHALL NOT depend on mid-document rules to be complete
+
+### Requirement: Prompts contain no self-contradictory role rules
+
+Agent prompts SHALL NOT contain rules that contradict each other or the agent's role invariants (e.g. an output rule
+that conflicts with another output rule, or a preamble describing the agent as a loadable skill).
+
+#### Scenario: Contradiction audit
+
+- **WHEN** an agent prompt is audited during review
+- **THEN** no two rules in the prompt SHALL prescribe mutually exclusive behavior for the same situation
+
 ### Requirement: Skill context does not change flow's role
 
 Loaded skill instructions SHALL NOT change flow's identity or responsibilities. Flow remains the orchestrator regardless
@@ -81,37 +112,6 @@ them directly.
 - **THEN** flow SHALL enumerate available MCP tools as part of the plan
 - **THEN** each MCP tool usage SHALL be assigned to @player in the plan
 - **THEN** flow SHALL NOT assign any MCP tool to itself in the plan
-
-### Requirement: Prompts carry an explicit role-invariants block
-
-Each agent prompt SHALL contain a role-invariants block that (a) names the agent's fixed responsibilities, (b) states
-that tool availability never changes them, and (c) is restated as the terminal content of the prompt — the closing
-non-negotiables section SHALL be the last block before the generation point, with no other rule content after it.
-
-#### Scenario: Prompt structure check
-
-- **WHEN** an agent prompt file (`flow.md`, `subflow.md`, `player.md`, `coach.md` in either port) is inspected
-- **THEN** it SHALL contain a role-invariants block near the top
-- **THEN** it SHALL restate the invariants in a closing section at the end of the prompt
-- **THEN** no normative rule content SHALL appear after that closing section
-
-#### Scenario: Closing block is self-sufficient
-
-- **WHEN** the closing non-negotiables section of any agent prompt is read in isolation
-- **THEN** it SHALL contain every role-critical invariant on its own (flow/subflow: delegate only, never answer the user
-  directly, every response is a `task` tool call; player: implement only, return upward, never answer the user; coach:
-  review only, binary verdict, never edit files)
-- **THEN** it SHALL NOT depend on mid-document rules to be complete
-
-### Requirement: Prompts contain no self-contradictory role rules
-
-Agent prompts SHALL NOT contain rules that contradict each other or the agent's role invariants (e.g. an output rule
-that conflicts with another output rule, or a preamble describing the agent as a loadable skill).
-
-#### Scenario: Contradiction audit
-
-- **WHEN** an agent prompt is audited during review
-- **THEN** no two rules in the prompt SHALL prescribe mutually exclusive behavior for the same situation
 
 ### Requirement: Oversized prompts are split into core and reference tiers
 

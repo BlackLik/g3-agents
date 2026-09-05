@@ -42,6 +42,26 @@ the session.
 - **THEN** the two descriptions SHALL make clear that `flow` is the primary entry point and `subflow` is the
   nested-delegation variant
 
+### Requirement: Descriptions fit tool-metadata budgets
+
+Each agent description SHALL be a single YAML folded scalar of five labeled segments (per the structured-format
+requirement) totaling roughly 80–150 words, so it can serve as MCP/tool metadata without excessive size.
+
+#### Scenario: Description length check
+
+- **WHEN** the four descriptions in `.opencode/agents/` are measured
+- **THEN** each SHALL be one folded scalar between 80 and 150 words containing all five labeled segments
+
+### Requirement: Only frontmatter descriptions change
+
+The change SHALL modify only the `description` frontmatter line of each agent file; role bodies, `mode`, `temperature`,
+and `permission` fields SHALL remain byte-identical.
+
+#### Scenario: Diff shows frontmatter-only edits
+
+- **WHEN** the change is applied to `.opencode/agents/*.md`
+- **THEN** the diff SHALL touch only `description:` lines in frontmatter
+
 ### Requirement: Descriptions follow the five-part structured format
 
 Each agent frontmatter `description` in `.opencode/agents/` SHALL be composed of five labeled segments in fixed order:
@@ -78,23 +98,3 @@ Each agent frontmatter `description` in `.opencode/agents/` SHALL be composed of
 - **WHEN** the Side effects segment of any description is read
 - **THEN** it SHALL state explicitly whether the agent writes/deletes files, runs mutating commands, sends data, or has
   no externally visible mutations beyond its returned result
-
-### Requirement: Descriptions fit tool-metadata budgets
-
-Each agent description SHALL be a single YAML folded scalar of five labeled segments (per the structured-format
-requirement) totaling roughly 80–150 words, so it can serve as MCP/tool metadata without excessive size.
-
-#### Scenario: Description length check
-
-- **WHEN** the four descriptions in `.opencode/agents/` are measured
-- **THEN** each SHALL be one folded scalar between 80 and 150 words containing all five labeled segments
-
-### Requirement: Only frontmatter descriptions change
-
-The change SHALL modify only the `description` frontmatter line of each agent file; role bodies, `mode`, `temperature`,
-and `permission` fields SHALL remain byte-identical.
-
-#### Scenario: Diff shows frontmatter-only edits
-
-- **WHEN** the change is applied to `.opencode/agents/*.md`
-- **THEN** the diff SHALL touch only `description:` lines in frontmatter

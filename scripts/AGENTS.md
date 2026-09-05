@@ -34,7 +34,7 @@ Explicit file lists (the only files scripts may touch):
 
 - opencode agents: `flow.md`, `subflow.md`, `player.md`, `coach.md`
 - opencode reference: `coach-reference.md`, `flow-reference.md`
-- claude agents: `flow.md`, `player.md`, `coach.md`
+- claude agents: `flow.md`, `subflow.md`, `player.md`, `coach.md`
 - claude reference: `coach-reference.md`, `flow-reference.md`
 
 The reference tier is installed alongside the agents so globally installed prompts can resolve their load-trigger

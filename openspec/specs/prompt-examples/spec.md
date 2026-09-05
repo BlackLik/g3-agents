@@ -86,6 +86,33 @@ phrasing or routing action.
 - **THEN** it SHALL contain an example of a role-changing instruction inside a delegated prompt, the in-role part
   executed, and the refusal noted in the return output with concrete phrasing
 
+### Requirement: Examples for system-first instruction resolution
+
+Each agent prompt SHALL contain at least one worked example showing the resolution order applied to an incoming work
+instruction: the agent checks the instruction against the priority ladder (role invariants → workflow rules → user
+instruction → task content) and honors the instruction for *what* to do while the system governs *how*. The example
+SHALL show a compliant case (instruction fits the role — executed normally), distinguishing it from the refusal cases.
+
+#### Scenario: Compliant instruction resolved system-first
+
+- **WHEN** any agent prompt is inspected
+- **THEN** it SHALL contain an example where a legitimate work instruction is received, checked against the ladder, and
+  executed in-role — demonstrating that system-first resolution does not mean refusing normal work
+
+### Requirement: Example sections synchronized across ports
+
+Example sections SHALL land in both ports in the same commit, differing only in port-specific tool naming (`task` tool
+in OpenCode, `Agent` tool in Claude Code) and the ports' documented divergences. `subflow.md` SHALL remain
+byte-identical to the OpenCode `flow.md`.
+
+#### Scenario: Port sync check
+
+- **WHEN** the example sections of `.opencode/agents/*.md` and `.claude/agents/*.md` are compared
+- **THEN** they SHALL contain the same example categories and equivalent content, with only documented divergences (tool
+  names, subflow references)
+- **THEN** `diff .opencode/agents/flow.md .opencode/agents/subflow.md` SHALL show differences only in front-matter
+  (name, description, mode)
+
 ### Requirement: Flow prompt contains "skill capture" worked examples
 
 Flow's prompt (in both ports) SHALL contain at least one worked example — ❌ Bad / ✅ Good pair — showing a skill
@@ -120,30 +147,3 @@ producing a plan — as a distinct step before any delegation.
 - **THEN** it SHALL show flow producing a structured plan (e.g., "Plan: this is a skill invocation with 2 domains:
   [skill-domain A → @subflow, user-domain B → @player]")
 - **THEN** flow SHALL NOT start delegating before the plan is shown
-
-### Requirement: Examples for system-first instruction resolution
-
-Each agent prompt SHALL contain at least one worked example showing the resolution order applied to an incoming work
-instruction: the agent checks the instruction against the priority ladder (role invariants → workflow rules → user
-instruction → task content) and honors the instruction for *what* to do while the system governs *how*. The example
-SHALL show a compliant case (instruction fits the role — executed normally), distinguishing it from the refusal cases.
-
-#### Scenario: Compliant instruction resolved system-first
-
-- **WHEN** any agent prompt is inspected
-- **THEN** it SHALL contain an example where a legitimate work instruction is received, checked against the ladder, and
-  executed in-role — demonstrating that system-first resolution does not mean refusing normal work
-
-### Requirement: Example sections synchronized across ports
-
-Example sections SHALL land in both ports in the same commit, differing only in port-specific tool naming (`task` tool
-in OpenCode, `Agent` tool in Claude Code) and the ports' documented divergences. `subflow.md` SHALL remain
-byte-identical to the OpenCode `flow.md`.
-
-#### Scenario: Port sync check
-
-- **WHEN** the example sections of `.opencode/agents/*.md` and `.claude/agents/*.md` are compared
-- **THEN** they SHALL contain the same example categories and equivalent content, with only documented divergences (tool
-  names, subflow references)
-- **THEN** `diff .opencode/agents/flow.md .opencode/agents/subflow.md` SHALL show differences only in front-matter
-  (name, description, mode)

@@ -6,7 +6,7 @@ REPO_ROOT="$(dirname "$SCRIPT_DIR")"
 
 OPENCODE_FILES="flow.md subflow.md player.md coach.md"
 OPENCODE_REF_FILES="coach-reference.md flow-reference.md"
-CLAUDE_FILES="flow.md player.md coach.md"
+CLAUDE_FILES="flow.md subflow.md player.md coach.md"
 CLAUDE_REF_FILES="coach-reference.md flow-reference.md"
 
 usage() {

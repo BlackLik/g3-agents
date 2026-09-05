@@ -2,18 +2,21 @@
 
 ## Purpose
 
-A mediated multi-agent system where an orchestrator (`@flow`) decomposes tasks and delegates to specialized agents:
-`@player` (executor), `@coach` (reviewer), and `@subflow` (recursive delegation for complex tasks). All communication
-flows through the orchestrator.
+A mediated multi-agent system with a layered session architecture: a thin global orchestrator (`@flow`) decomposes
+requests, composes a handoff per task, and routes EVERY task to `@subflow` — the per-task ephemeral orchestrator that
+owns the whole mediated cycle over `@player` (executor) and `@coach` (reviewer) and dies with the task. All
+communication flows through the orchestrators.
 
 The `agents/` directory is the **reference implementation** — the source of truth for role behavior across all ports
 (see Port Synchronization in the root AGENTS.md).
 
 ## Ownership
 
-- **`@flow`** — primary orchestrator, receives all user requests
-- **`@subflow`** — recursive sub-agent with identical logic to flow but runs as a child context (`mode: subagent`)
-- **`@player`** — executor; writes minimal code per task instructions
+- **`@flow`** — primary orchestrator, receives all user requests; thin global routing layer — never runs the mediated
+  cycle itself
+- **`@subflow`** — per-task ephemeral orchestrator with an identical body to flow, run as a child context
+  (`mode: subagent`); owns the whole mediated cycle for one task and returns the approved result + handoff-file path
+- **`@player`** — executor; writes minimal code per task instructions; sole writer/reader of handoff files
 - **`@coach`** — deterministic reviewer (temperature=0.2) that evaluates player output
 
 All agents are `mode: subagent` except `flow`, which is `mode: primary`. Each agent file defines its own permissions,
@@ -21,11 +24,13 @@ temperature, and rules in front-matter. Frontmatter `description` fields are wri
 (`>-`) composed of five labeled segments in fixed order — Purpose, Guidelines, Parameters, Limitations, Side effects —
 totaling 80–150 words.
 
-**Orchestrator tool restriction:** `flow` and `subflow` run with an explicit tool allowlist — `task`, `list`,
-`skill`, `webfetch` — plus `edit: deny` and `bash: deny`. There is no `'*': allow`; `question` and `todowrite` are
-not in the allowlist. The orchestrator cannot modify files, run shell commands, or prompt the user interactively at
-the tool layer; all execution is physically only possible via `@player`, all codebase context via `@explore`, and
-all user interaction via mediated deliveries (see Critical operational rules).
+**Orchestrator tool restriction:** `flow` and `subflow` run deny-by-default (`'*': deny`) with an explicit
+allowlist — `task` (targets `player`/`coach`/`explore`/`subflow` only), `skill`, and a `read` grant scoped to the
+reference tier (`*/reference/*.md`); `flow` (primary, depth 0) additionally has `question: allow`. `edit`, `bash`,
+`grep`, `glob`, `list`, `lsp`, `webfetch`, `websearch`, and `todowrite` are denied. The orchestrator cannot modify
+files, run shell commands, or gather information at the tool layer; all execution is physically only possible via
+`@player`, all codebase and web context via `@explore`; user interaction is the single depth-0 clarity-gate
+`question` round (flow only) plus coach-reviewed mediated deliveries (see Critical operational rules).
 
 ## Local Contracts
 
@@ -38,16 +43,18 @@ the user — only through orchestration calls via the Task tool.
 prompts live in the reference tier (`reference/flow-reference.md`), not in flow.md's core body — flow reads that file
 on demand via its load triggers. This is intentional, not cross-referencing — it avoids circular doc dependencies.
 
-- **Flow delegates context-gathering to @explore directly** — when the orchestrator needs codebase context, it calls
-  `subagent_type="explore"` directly, not via @player. This replaces the old pattern where @player called @explore
-  internally.
+- **Flow delegates context-gathering to @explore directly** — when the orchestrator needs codebase context or web
+  information, it calls `subagent_type="explore"` directly, not via @player and never by invoking information tools
+  itself (flow holds none; the sole `read` grant is the reference tier). This replaces the old pattern where @player
+  called @explore internally.
 
 ### flow.md ↔ subflow.md duplication
 
 `subflow.md` body content is byte-identical to `flow.md`. OpenCode requires separate files because the `mode` field
 (primary vs subagent) is a per-file front-matter attribute that cannot be shared across files. This is not redundant
-documentation — it is required by the tooling. Subflow delegates identically but runs in a child context with
-incrementing depth. Both share the single reference tier at `reference/flow-reference.md`.
+documentation — it is required by the tooling. The shared body serves both layered roles keyed on depth: flow (depth
+0) routes every task; subflow (depth ≥1) runs the mediated cycle for its one task. Both share the single reference
+tier at `reference/flow-reference.md`.
 
 ### Prompt structure rules
 
@@ -74,21 +81,20 @@ Applies to every file in `agents/` (and, mirrored, to the `.claude/` port):
 
 ### Ecosystem boundaries
 
-This system is **open**: agents may reach outside the system for information or execution (player has `webfetch:
-allow`). Internal boundaries exist — orchestrator mediates all inter-agent communication — but there is no enforced
-isolation.
+This system is **open**: agents may reach outside the system for information or execution (via `@explore`'s web
+tools and `@player`'s MCP passthrough). Internal boundaries exist — orchestrator mediates all inter-agent
+communication — but there is no enforced isolation.
 
 ## Work Guidance
 
 ### Depth mechanisms — each agent, separately
 
-**flow / subflow:** use the `depth` parameter for recursive task decomposition:
+**flow / subflow:** use the `depth` parameter to mark the layer:
 
-- Top-level call from user → `depth: 0`
-- First recursive delegation → `depth: 1`
-- Second recursive delegation → `depth: 2` (terminal; force-delegate to @player, no further splitting)
-- Decision tree: complex tasks with `depth < 2` split into subtasks delegated via the same flow agent with `depth + 1`.
-  At `depth == 2`, always delegate directly to player.
+- Top-level call from user → `depth: 0` (flow). EVERY task in flow's plan — simple or complex — is delegated to
+  `@subflow` with `(depth: 1)`; there is no simple→player fast path and no depth-based terminal rule at the top level.
+- `@subflow` (depth ≥1) decomposes its one task into `@player`/`@coach`/`@explore` delegations only — never another
+  `@subflow`.
 
 **player / coach:** use recursion depth for self-calls via the Task tool, not a shared `depth` parameter:
 
@@ -114,10 +120,12 @@ across the agent system:
 
 **Orchestrator (@flow / @subflow):**
 
-- Every response MUST be an actual `task` tool call — no plain-text responses. The tool call's `description` field is
-  the visual marker for orchestrator output.
+- Every response MUST be an actual `task` tool call — no plain-text responses (the single exception: the depth-0
+  clarity gate's `question` round). The tool call's `description` field is the visual marker for orchestrator output.
 - **Never answer directly, write code, explain solutions, explore files, or perform execution.** The orchestrator's sole
   output is delegation and review decisions.
+- **Uniform routing:** flow routes EVERY task to `@subflow`; the mediated cycle runs INSIDE `@subflow` — flow never
+  runs it and adds no extra coach pass at exit (one coach pass per player call, N=N).
 - Always delegate to @player for implementation, @explore for context-gathering, and @coach for review — never do work
   yourself.
 - Explore delegations are phrased as ONE aggregated, session-scoped query; delegated prompts propagate the explore-first
@@ -125,29 +133,34 @@ across the agent system:
 - **Bounded cycle:** at most 3 revision rounds per task per recursion level. On exhaustion, escalate through the
   mediated cycle (player drafts the escalation summary, coach reviews it, flow delivers accept / re-approach / abort)
   and stop the turn.
-- **Assumptions-first clarification:** proceed on stated assumptions by default; at most one question round per
-  top-level request, only when genuinely blocked; every question or escalation reaches the user as a coach-reviewed
-  delivery, never as an interactive prompt or unreviewed plain text.
+- **Assumptions-first clarification + clarity gate:** proceed on stated assumptions by default; at most one question
+  round per top-level request, only when genuinely blocked (ambiguous success criteria, destructive choice, missing
+  access). At depth 0, flow fires that round via the interactive `question` tool — after the analysis phase and any
+  `@explore` pass, before the first `@player` delegation — the single sanctioned non-`task` response. Subflow (depth
+  ≥1) has no `question` tool; its blocked ambiguities proceed on assumptions or escalate upward. Escalations always
+  reach the user as coach-reviewed deliveries, never unreviewed plain text.
 
 **Player (@player):**
 
-- `webfetch: allow` — permitted for external lookups when needed.
+- **Terminal-first:** `bash` is the execution surface — running/verifying code and pinpoint viewing (`cat`/`sed -n`)
+  of files the task prompt or `@explore` already named; `read`/`grep`/`glob`/`list`/`webfetch`/`websearch` are denied.
 - **Broken linters/tests:** if your change causes lint errors or test failures in unrelated code, stop and return upward
   immediately (`⚠️ lint failed in utils.py — returning upward`). Do NOT fix them. Do NOT refactor to make them pass.
   Do NOT touch files outside the task scope.
 - Write less code; don't explain; zero scope creep; check before writing with `@explore`.
-- **Explore-first context:** any detailed or broad context need (multi-file reads, codebase structure, pattern/semantic
-  search, reuse checks) goes to `@explore` FIRST as one aggregated query; direct read/grep only refine a concrete
-  target explore or the task prompt already named. Rationale: explore runs complex queries in its own context and
-  returns the distilled answer — token economy + single responsibility.
+- **Broad context via @explore:** any detailed or broad context need (multi-file reads, codebase structure,
+  pattern/semantic search, reuse checks) goes to `@explore` FIRST as one aggregated query; bash only refines a
+  concrete target explore or the task prompt already named. Rationale: explore runs complex queries in its own
+  context and returns the distilled answer — token economy + single responsibility.
 
 **Coach (@coach):**
 
 - Reviews git diffs, detects AI-generated code fingerprints, checks all vulnerability categories (injection, auth
   bypass, SSRF, path traversal, crypto, deserialization), enforces necessity justification for any new code.
-- **Beyond-diff context via @explore:** the diff is coach's direct input (grep-based detection categories run on diff
-  text); any context beyond the diff — project conventions, duplicates, callers, surrounding code — comes from
-  `@explore` first as one aggregated query; direct reads only pin-verify a specific explore finding.
+- **Explore-sourced review input:** coach has no `bash`/`read`/`grep`/`glob` (sole `read` grant: the reference tier);
+  Step 0 obtains the diff, diff stat, and log via one `@explore` delegation (verbatim output) and refuses to review
+  without it; detection categories (A–E) run over the diff text in coach's own context. Any context beyond the diff —
+  project conventions, duplicates, callers, surrounding code — comes from `@explore` as one aggregated query.
 - **Depth tracking mandatory:** Every delegated call MUST include current depth in task description using `(depth: N)`
   format. Max depth: 2 (depth 1 → depth 2 → STOP). Rule of thumb: if sub-task fits in one sentence, review inline — no
   recursion.
@@ -176,30 +189,32 @@ across the agent system:
 
 **Orchestrator (@flow / @subflow):**
 
-- **Split into independent subtasks** — when delegating recursively, split the request into N independent subtasks. The
-  prompt MUST NOT contain the full unsplit request; each subtask defines its own scope, success criteria, and output
-  format.
+- **Split into independent subtasks** — flow splits the request into N independent tasks (one @subflow delegation
+  each); @subflow splits its task into player delegations. The prompt MUST NOT contain the full unsplit request; each
+  subtask defines its own scope, success criteria, and output format.
 - **Subtask boundary clarity** — each subtask prompt must clearly define: (a) scope of work, (b) success criteria, (c)
   expected output format.
 
 ### Post-recursion review
 
-**Orchestrator (@flow / @subflow):**
+**Orchestrator (@subflow):**
 
-- **Coach review after each recursion level** — after all subtasks at a recursion level complete and are merged, invoke
-  @coach before proceeding to the next level.
-- **Coach rejection blocks progression** — if @coach rejects at any recursion level, create revision tasks until
-  accepted, bounded by the retry budget (3 rounds per task per recursion level — see Cycle priority). On exhaustion,
-  run the mediated escalation; no progression without coach approval or an accepted escalation decision.
-- **Level-scoped coach prompts** — include level-scoping information in coach prompts (e.g., "Review only the depth-2
-  subtask outputs: ...").
+- **Review lives inside the per-task orchestrator** — @subflow invokes @coach after each player delegation and repeats
+  until `APPROVE` (N=N). Flow performs NO extra coach pass at exit — @subflow's `APPROVE` is sufficient; exactly one
+  coach pass per player call, no doubling.
+- **Coach rejection blocks progression** — on `REJECT`, create fresh revision tasks until `APPROVE`, bounded by the
+  retry budget (3 rounds per task per recursion level — see Cycle priority). On exhaustion, run the mediated
+  escalation; no progression without coach approval or an accepted escalation decision.
+- **Call-scoped coach prompts** — each coach review is scoped to the player call it accompanies, not the entire task.
 
 ### Coach fresh review
 
 **Coach (@coach):**
 
-- **Binary verdict only** — coach issues only ✅ Accepted or ❌ Rejected. No conditional approval patterns ("Accepted
+- **Binary verdict only** — coach issues only `APPROVE` or `REJECT`. No conditional approval patterns ("Approved
   if...", "Approved pending...").
+- **One review per player call (N=N)** — each player call is reviewed exactly once; an already-approved player call is
+  never re-reviewed.
 - **Review from scratch each time** — no carry-forward assumptions. Each review is independent of previous reviews.
 - **Re-review convergence gate** — on re-review after a rejection, coach first verifies each of its own prior findings
   (fixed / not fixed); NEW blocking findings are limited to CRITICAL/HIGH severity — new MEDIUM/LOW findings are
@@ -212,15 +227,29 @@ across the agent system:
 **Orchestrator (@flow / @subflow):**
 
 - **Full mediated cycle enforced unconditionally** — EVERY task, regardless of perceived simplicity, goes through the
-  full cycle: player → coach → deliver.
+  full cycle: player → coach → deliver. The cycle runs INSIDE @subflow; flow routes every task there and never runs
+  the cycle itself.
 - **No direct answers** — every user-facing response goes through the mediated cycle. The orchestrator never answers the
   user directly.
 - **No skipping coach review** — coach review is mandatory for every task. On rejection, repeat the cycle until
-  accepted — bounded by the retry budget: 3 revision rounds per task per recursion level, then a mediated escalation
+  `APPROVE` — bounded by the retry budget: 3 revision rounds per task per recursion level, then a mediated escalation
   (player drafts, coach reviews, flow delivers accept / re-approach / abort) and the turn stops.
-- **Revision continuity** — revision rounds preserve memory: resume the same player session when the delegation tool
-  supports it (OpenCode `task_id`), otherwise embed coach's findings from all prior rounds verbatim in the revision
-  prompt, newest first.
+- **Revision continuity** — every invocation is a fresh session; there is no session resume. Revision prompts embed
+  coach's findings from all prior rounds verbatim, newest first; other inter-session context travels via the handoff
+  file (see Session handoff).
+
+### Session handoff
+
+**All agents:**
+
+- **Fresh session per invocation** — the same session is never resumed; the handoff file replaces resume.
+- **Handoff file as context bus** — a text file in the OS temp dir. `@player` writes it on behalf of any write-less
+  agent (a ROLE-level rule, independent of the agent's tool set); the NEXT session's `@player` reads it.
+- **Orchestrators pass path + digest only** — flow/subflow never read handoff files (their sole `read` grant is the
+  reference tier); heavy content never enters orchestrator contexts. @subflow returns upward only the approved result
+  and the handoff-file path.
+- Protocol details not yet standardized (file naming and task-id minting, minimal schema, permissions/TTL, Windows
+  temp dir, cross-turn durability) — open design questions; only the rules above are contract.
 
 ### Role persistence & instruction hierarchy
 
@@ -238,7 +267,7 @@ across the agent system:
   (`[PRIORITY:3]`) > task content (`[PRIORITY:4]`); inline markers are authoritative over prose. User requests to bypass
   the cycle (answer directly, skip coach) are served through the cycle, never by abandoning it.
 - Pre-response self-check before every response: (1) the response is a `task` tool call; (2) any user-facing delivery
-  carries coach's ✅ Accepted verdict.
+  carries coach's `APPROVE` verdict obtained inside @subflow's cycle.
 
 **Player / Coach:**
 
@@ -247,22 +276,26 @@ across the agent system:
 
 ### Workflow loop (mediated cycle)
 
-The orchestrator controls a repeating delegation cycle:
+The per-task orchestrator (@subflow) controls a repeating delegation cycle; flow only composes the handoff and relays
+the result:
 
-1. **Orchestrator** receives request → decomposes if needed → gathers context via @explore (directly) → aggregates scope
-   → delegates to `@player`
-2. **`@player`** executes and returns result
-3. **Orchestrator** passes result to `@coach` for review
-4. **`@coach`** responds with binary verdict:
-   - ✅ Accepted — orchestrator moves to next task
-   - ❌ Rejected — orchestrator sends `@player` a revision task with specific coach feedback
-5. Repeat steps 2–4 until the task is fully complete — bounded by the retry budget (3 revision rounds per task per
-   recursion level); on exhaustion, run the mediated escalation (player drafts, coach reviews, deliver accept /
-   re-approach / abort) and stop the turn
+1. **flow** receives the request → runs the analysis phase → composes a handoff per task → delegates EVERY task to
+   `@subflow` with `(depth: 1)`
+2. **`@subflow`** decomposes its task if needed → gathers context via @explore (directly) → aggregates scope →
+   delegates to `@player` (fresh session)
+3. **`@player`** executes and returns result
+4. **`@subflow`** passes result to `@coach` for review
+5. **`@coach`** responds with binary verdict:
+   - `APPROVE` — @subflow moves to the next subtask or returns the result + handoff-file path upward
+   - `REJECT` — @subflow sends a NEW fresh `@player` session a revision task with all prior coach findings embedded
+     verbatim, newest first
+6. Repeat steps 3–5 until the task is fully complete (N=N: one coach pass per player call) — bounded by the retry
+   budget (3 revision rounds per task per recursion level); on exhaustion, run the mediated escalation (player drafts,
+   coach reviews, flow delivers accept / re-approach / abort) and stop the turn
 
 The orchestrator mediates every step of this cycle. This is not unidirectional delegation — it is a mediated loop where
-the orchestrator gates transitions between player work and coach review. The cycle is enforced unconditionally for EVERY
-task.
+the per-task orchestrator gates transitions between player work and coach review. The cycle is enforced unconditionally
+for EVERY task, and flow adds no extra coach pass at exit.
 
 ## Verification
 

@@ -8,45 +8,42 @@ Rules requiring @coach review after each recursion level completes.
 
 ### Requirement: Coach review after each recursion level
 
-After all subtasks at a given recursion level complete and their results are merged, flow SHALL invoke `@coach` to
-review the merged result before proceeding to the next level or returning to the caller.
+Coach review SHALL happen INSIDE the per-task orchestrator (currently `@subflow`) for each player call of its task:
+the orchestrator SHALL invoke `@coach` after each player delegation and SHALL repeat until `APPROVE` (N=N). Flow
+SHALL perform NO extra coach pass at its exit — `@subflow`'s APPROVE is sufficient; there SHALL be exactly one coach
+pass per player call, no doubling. Flow's only role SHALL be relaying the approved result and the handoff-file path.
 
-#### Scenario: Single recursion level with 3 subtasks
+#### Scenario: Single task with 3 player calls
 
-- **WHEN** flow splits a task into 3 subtasks and delegates to subflow
-- **THEN** after all 3 subtasks complete and results are merged
-- **THEN** flow SHALL call `task(..., subagent_type="coach")` with the merged result
+- **WHEN** the per-task orchestrator decomposes a task into 3 player delegations
+- **THEN** after each player delegation completes, the orchestrator SHALL call `@coach` with that player call's
+  result
+- **THEN** the orchestrator SHALL proceed to the next player delegation only after `APPROVE`
 
-#### Scenario: Nested recursion (depth 0 → depth 1 → depth 2)
+#### Scenario: Flow does not re-review at exit
 
-- **WHEN** depth-1 subflow splits into depth-2 subtasks
-- **THEN** after depth-2 subtasks complete and merge
-- **THEN** depth-1 subflow SHALL call coach on the merged result before returning to depth-0 flow
+- **WHEN** a task's cycle completes inside `@subflow` with an `APPROVE` verdict
+- **THEN** flow SHALL relay the approved result to the user
+- **THEN** flow SHALL NOT invoke `@coach` again on the same player call (no extra coach pass at flow exit)
 
 ### Requirement: Coach review scope per level
 
-Each recursion level's coach review SHALL be scoped to the subtasks at that level only. The review SHALL NOT re-review
-work from parent levels.
+Each coach review in the per-task orchestrator SHALL be scoped to the player call it accompanies. The review SHALL
+NOT re-review work from other player calls or from flow's routing.
 
-#### Scenario: Level-scoped review
+#### Scenario: Review scoped to one player call
 
-- **WHEN** depth-1 subflow calls coach after depth-2 completes
-- **THEN** coach SHALL review only the depth-2 subtask outputs, not the entire merged result from depth-1
-
-#### Scenario: Level communicated in coach prompt
-
-- **WHEN** flow calls coach for a recursion-level review
-- **THEN** flow SHALL include the depth level in the coach prompt: "Review the following depth-N subtask outputs: [list
-  of outputs]"
-- **THEN** coach SHALL review only the listed outputs
+- **WHEN** the orchestrator calls coach after a player delegation completes
+- **THEN** coach SHALL review only that player call's output, not the entire task or prior player calls
 
 ### Requirement: Review gate blocks progression
 
-If coach rejects the merged result at any recursion level, flow SHALL NOT proceed to the next level or return to the
-caller. Flow SHALL create revision tasks and repeat until coach accepts.
+If coach rejects the result of a player call, the per-task orchestrator SHALL NOT proceed to the next delegation or
+return to flow. The orchestrator SHALL create a fresh revision `@player` session (with all prior findings embedded
+verbatim) and repeat until coach approves, bounded by the retry budget.
 
-#### Scenario: Rejected merge at depth 1
+#### Scenario: Rejected player call blocks progression
 
-- **WHEN** coach rejects the merged result at depth 1
-- **THEN** flow SHALL create revision tasks for the rejected subtasks
-- **THEN** flow SHALL NOT return to depth 0 until coach accepts
+- **WHEN** coach rejects the result of a player call
+- **THEN** the orchestrator SHALL create a fresh revision task for `@player` with the findings embedded verbatim
+- **THEN** the orchestrator SHALL NOT proceed or return to flow until coach approves

@@ -55,19 +55,20 @@ Combine per-category verdicts into an overall verdict:
 - If SUSPECTED or CONFIRMED → include `## AI Detection` section with verdict, evidence list (marker ID, description,
   file:line), and action request text
 
-### A-Category: Signature Markers (grep patterns)
+### A-Category: Signature Markers (diff-text patterns)
 
-Detect explicit text markers in code diffs that indicate AI generation.
+Detect explicit text markers in code diffs that indicate AI generation. Categories A–D scan the diff text in coach's
+own context — no Grep/Read calls against the repository.
 
 | ID | Marker | Detection Rule | Weight |
 | ---- | -------- | --------------- | -------- |
-| A1 | Instruction step comments | Grep for `Step \d` pattern in comments (e.g., `# Step 1: Validate input`) | HIGH |
-| A2 | Placeholder comments | Grep for `your logic\|your code` pattern in comments (e.g., `// Add your logic here`) | HIGH |
-| A3 | Narrative comments | Grep for conversational/narrative comment markers (e.g., `# Let's implement this function`, `/* First, we check if... */`) | HIGH |
+| A1 | Instruction step comments | Scan the diff text for `Step \d` pattern in comments (e.g., `# Step 1: Validate input`) | HIGH |
+| A2 | Placeholder comments | Scan the diff text for `your logic\|your code` pattern in comments (e.g., `// Add your logic here`) | HIGH |
+| A3 | Narrative comments | Scan the diff text for conversational/narrative comment markers (e.g., `# Let's implement this function`, `/* First, we check if... */`) | HIGH |
 | A4 | Universal docstrings on trivial functions | Check if trivial functions (≤5 lines) have full docstrings with structured annotations (@param, :param:, etc.) | MEDIUM |
 | A5 | AI-formatted commit messages | Check if commit message follows rigid template (e.g., "feat: Add X", "fix: Correct Y") with no stylistic variation | LOW |
 | A6 | AI-formatted PR descriptions | Check if PR description follows formulaic structure with sections like "## Summary", "## Changes", "## Testing" | LOW |
-| A7 | Explicit AI references | Grep for "As an AI" or similar AI self-reference in comments | HIGH |
+| A7 | Explicit AI references | Scan the diff text for "As an AI" or similar AI self-reference in comments | HIGH |
 
 ### B-Category: Naming Markers (identifier analysis)
 
@@ -253,8 +254,10 @@ gate only decides WHICH findings are blocking, and only on re-review rounds.
 - If something "could" be a bug — treat it as a bug until proven otherwise
 - If you cannot reproduce the security scenario — describe the attack vector anyway
 - Shorter code with the same behavior is always preferred. If you can see a shorter path — flag the longer one.
-- Beyond-diff context (conventions, duplicates, callers, surrounding code) comes from the Explore agent first — one
-  aggregated query; direct reads only pin-verify a specific explore finding
+- The diff, diff stat, and log arrive via one Explore-agent delegation (verbatim output) — you never run bash/git
+  yourself; detection categories run over the diff text in your own context
+- Beyond-diff context (conventions, duplicates, callers, surrounding code) comes from the Explore agent — one
+  aggregated query; your only direct reads are the reference tier (`reference/*.md`)
 - Review from scratch every time — no carry-forward assumptions from previous reviews
 - Do NOT assume previously accepted code is still correct; re-evaluate the entire diff
 - Each review is independent; prior approval does not imply current approval

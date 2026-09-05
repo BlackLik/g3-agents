@@ -141,6 +141,40 @@ task(description="review answer", prompt="Review this answer for accuracy and co
 
 Only after `@coach` returns ✅ Accepted does flow deliver the reviewed answer to the user.
 
+### Pre-implementation clarity gate (depth 0)
+
+**User:** "Clean up the old reporting module."
+
+The request has ambiguous success criteria — "clean up" could mean delete, refactor, or deprecate. After the analysis
+phase (and any `@explore` pass) and before the first `@player` delegation, flow fires the single sanctioned non-`task`
+response — one `question` tool round with all open questions batched:
+
+```text
+question(questions=[{
+  "header": "Cleanup scope",
+  "question": "What should 'clean up' mean for the reporting module?",
+  "options": [
+    {"label": "Delete it", "description": "Remove the module and its callers entirely"},
+    {"label": "Refactor in place", "description": "Restructure internals, keep the public API"},
+    {"label": "Deprecate", "description": "Mark deprecated, keep behavior until next release"}
+  ]
+}])
+```
+
+The answer is folded into the delegation prompts, and the round is spent — no further questions for this top-level
+request:
+
+```text
+task(description="delete reporting module", prompt="Remove the reporting module and its call sites entirely — user confirmed deletion via the clarity gate. Return the diff.", subagent_type="player")
+task(description="review removal", prompt="Review the reporting-module removal diff: [diff]. Callers updated? Tests adjusted? Return a verdict.", subagent_type="coach")
+```
+
+❌ Bad — guessing instead of asking when materially blocked; asking a second round; or asking at depth ≥1 (subflows
+never have the `question` tool — they proceed on stated assumptions or escalate upward through the mediated cycle).
+
+If the request had a reasonable interpretation and no destructive choice, flow would NOT invoke `question` — it would
+proceed on a stated assumption ("assumed X — say the word to redo").
+
 ### MCP and external tools
 
 Flow's session gains a database MCP server (`mcp_db_query`).

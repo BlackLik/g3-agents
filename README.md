@@ -1,6 +1,6 @@
 # g3-agents — Multi-Agent Orchestration for OpenCode and Claude Code
 
-A set of agent configs (agents) for OpenCode with mediation, recursive task decomposition, and zero-tolerance review. No
+A set of agent configs (agents) for OpenCode with mediation, layered task decomposition, and zero-tolerance review. No
 dependency installation required. A Claude Code port of the same system ships in `.claude/agents/`.
 
 ## 📋 Purpose
@@ -17,9 +17,9 @@ automatically discovers agents via YAML front-matter in compatible runtimes (e.g
 Send tasks to `@flow` — the orchestrator handles decomposition and coordination. A realistic flow with revision cycles:
 
 ```text
-@flow → decomposition → @player (first version) → @coach → REVISE
-→ @player (revised code) → @coach → ACCEPT
-→ @flow collects results, requests merged review → done
+@flow → decomposition → @subflow (per task) → @player (first version) → @coach → REJECT
+→ fresh @player session (findings embedded) → @coach → APPROVE
+→ @subflow returns the approved result + handoff-file path → @flow relays → done
 ```
 
 ## 📥 Installation
@@ -61,8 +61,8 @@ scripts/install.ps1 claude
 > **Note:** Installation only copies/overwrites files from the repository —
 > your existing agents are never deleted.
 
-In this repository the Claude Code port (`.claude/agents/`: flow, player,
-coach — no subflow, `flow` recurses into itself) is discovered automatically.
+In this repository the Claude Code port (`.claude/agents/`: flow, subflow,
+player, coach) is discovered automatically.
 Start with `claude --agent flow` to run the orchestrator as the main session.
 
 ## 🗑 Uninstall
@@ -84,36 +84,34 @@ scripts/uninstall.ps1 claude
 ## 🏗 Architecture
 
 ```text
-User → @flow (orchestrator) → @player (executor) → @coach (reviewer)
-         ↑                                                        │
-         └──── @flow evaluates coach verdict: ACCEPT→done          ↓
-                  REVISE/REJECT → instruction to player────────────┘
+User → @flow (global orchestrator) → @subflow (per-task orchestrator) → @player (executor) → @coach (reviewer)
+         ↑                             ↑                                                        │
+         └── relays approved result    └──── @subflow evaluates coach verdict: APPROVE→return    ↓
+                                                REJECT → fresh @player session──────────────────┘
 ```
 
-`@coach` **never sends** revisions directly to `@player`. All verdicts go through `@flow`, which decides whether to
-continue the cycle or terminate.
+`@coach` **never sends** revisions directly to `@player`. All verdicts go through `@subflow`, which decides whether to
+continue the cycle or return upward; `@flow` only composes handoffs and relays approved results.
 
 ## ⚙️ How It Works
 
-The orchestrator decomposes tasks by complexity and caps recursion at depth 2. After all subtasks complete, a final
-merged review is requested from `@coach`.
+The global orchestrator decomposes the request and routes every task to `@subflow`; each task's cycle runs entirely
+inside `@subflow` with exactly one coach review per player call — no extra coach pass at flow exit.
 
-## 📐 Depth System
+## 📐 Layered Sessions
 
-A depth system controls recursion:
+A depth marker separates the two orchestrator layers:
 
-| Depth | Description | Behavior |
+| Depth | Role | Behavior |
 | --- | --- | --- |
-| **0** | Top-level task | Decomposition per rules below |
-| **1** | First recursion | Standard decomposition |
-| **2** | Second recursion (terminal) | Forced delegation directly to `@player` — no further splitting |
+| **0** | `@flow` — thin global orchestrator | Decomposes the request, composes a handoff per task, routes EVERY task to `@subflow` |
+| **≥1** | `@subflow` — per-task ephemeral orchestrator | Owns the whole mediated cycle (player → coach, N=N until APPROVE), dies with the task |
 
-## 📏 Task Decomposition Rules
+## 📏 Task Routing Rules
 
-| Complexity | Depth < 2 | Depth == 2 |
-| --- | --- | --- |
-| **Simple** (≤2 concerns) | Delegate directly to `@player` | Delegate to `@player` |
-| **Complex** (>2 concerns) | Split into subtasks, delegate each via `@flow` with depth+1 (`@subflow` — same thing, but runs as a subagent) | Force-delegate to `@player` |
+Uniform — no fast path: every task, simple or complex, goes `@flow` → `@subflow` → (`@player` ⇄ `@coach`). Every
+invocation is a fresh session; inter-session context travels via handoff files (`@player` writes and reads them,
+orchestrators pass only the path plus their own digest).
 
 ## 📂 File Structure
 
@@ -129,12 +127,13 @@ README.md
     ├── flow.md      — Orchestrator (primary agent)
     ├── player.md    — Executor (subagent, minimalist executor)
     ├── coach.md     — Reviewer (subagent, zero-tolerance reviewer)
-    └── subflow.md   — Recursive orchestrator (subagent, identical to flow.md except for mode field)
+    └── subflow.md   — Per-task orchestrator (subagent, identical to flow.md except for front-matter)
 
 .claude/               — Claude Code port
 ├── AGENTS.md    — DOX contract for the port (divergences, sync rules)
 └── agents/
-    ├── flow.md      — Orchestrator (recurses into itself — replaces subflow)
+    ├── flow.md      — Orchestrator (routes every task to subflow)
+    ├── subflow.md   — Per-task orchestrator (same body as flow.md)
     ├── player.md    — Executor
     └── coach.md     — Reviewer (review-only tools enforced)
 
@@ -151,9 +150,9 @@ scripts/               — Install/uninstall scripts for both ports
 ### `@flow` — Orchestrator (primary, temperature 0.1)
 
 - The only top-level interface with the user
-- Receives requests, decomposes tasks per depth/concerns rules
-- Delegates work exclusively via the `task()` tool
-- Evaluates `@coach` verdicts and decides: continue the cycle or move to the next task
+- Receives requests, decomposes them into tasks, and composes a handoff per task
+- Delegates work exclusively via the `task()` tool — EVERY task goes to `@subflow`
+- Relays approved results; never runs the mediated cycle itself
 - Never answers the user directly — only through the mediation loop
 
 ### `@player` — Executor (subagent, temperature 0.6)
@@ -167,14 +166,14 @@ scripts/               — Install/uninstall scripts for both ports
 
 - Zero-tolerance checks: security, correctness, anti-patterns, performance
 - Checks for AI-generated patterns and security issues
-- Returns ACCEPT / REVISE / REJECT with specific feedback
+- Returns a binary APPROVE / REJECT verdict with specific feedback
 - Does not make code changes — review only
 
-### `@subflow` — Recursive Orchestrator (subagent, temperature 0.1)
+### `@subflow` — Per-Task Orchestrator (subagent, temperature 0.1)
 
-- Identical to `@flow`, but runs as a subagent
-- Used for complex tasks with >2 concerns at depth < 2
-- Each recursion level increases depth by +1
+- Identical body to `@flow`, but runs as a subagent — one fresh session per task
+- Receives EVERY task from `@flow` and owns the whole mediated cycle internally
+- Returns upward only the approved result plus the handoff-file path, then dies with the task
 
 ## 📊 Example Task Flow
 
@@ -182,21 +181,21 @@ scripts/               — Install/uninstall scripts for both ports
 User: "@flow: implement a REST API for user CRUD"
        │
        ▼
-@flow (depth=0, complex → split)
-       ├── Task 1: "create User model and validation schema" → @flow(depth=1)
+@flow (depth=0, split → one handoff per task)
+       ├── Task 1: "create User model and validation schema" → @subflow(depth=1)
        │                    │
        │                    ▼
-       │              @player → code → @coach → ACCEPT
+       │              @player → code → @coach → APPROVE
        │
-       └── Task 2: "create endpoints GET/POST/PUT/DELETE /users" → @flow(depth=1)
+       └── Task 2: "create endpoints GET/POST/PUT/DELETE /users" → @subflow(depth=1)
                             │
                             ▼
-                      @player → code → @coach → REVISE (security issue)
+                      @player → code → @coach → REJECT (security issue)
                             │
                             ▼
-                      @player (with revision instructions) → revised code → @coach → ACCEPT
+                      fresh @player session (prior findings embedded verbatim) → revised code → @coach → APPROVE
 
-@flow collects results from all subtasks and requests a final merged review from @coach
+@flow relays each approved result — no extra coach pass at exit (one coach review per player call)
 ```
 
 ## ⚠️ Important Rules
@@ -204,7 +203,7 @@ User: "@flow: implement a REST API for user CRUD"
 - **`@flow` never answers directly** — only through the mediation loop
 - **`@player` does not explain itself** — code speaks for itself
 - **`@coach` is uncompromising** — security and correctness over speed
-- **Depth 2 is terminal** — at depth 2, tasks are not split further but delegated directly to `@player`
+- **No fast path** — every task routes through `@subflow`; sessions are never resumed (handoff files carry context)
 
 ---
 
